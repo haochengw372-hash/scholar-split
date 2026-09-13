@@ -158,6 +158,31 @@ def test_chrome_extension_origin_is_limited_to_intake_routes(workspace):
     ).status_code == 403
 
 
+def test_chrome_extension_can_read_only_its_temporary_pdf(workspace, tmp_path):
+    download_dir = tmp_path / "ScholarSplit"
+    download_dir.mkdir()
+    pdf = download_dir / "scholarsplit-test.pdf"
+    content = b"%PDF-1.7\n" + b"x" * 5000 + b"\n%%EOF"
+    pdf.write_bytes(content)
+    headers = {
+        "Origin": "chrome-extension://abcdefghijklmnop",
+        "X-ScholarSplit-Client": "chrome-extension",
+    }
+    client = workspace[0].test_client()
+    response = client.post("/api/v1/pdf/read-local", json={"path": str(pdf)}, headers=headers)
+    assert response.status_code == 200
+    assert response.mimetype == "application/pdf"
+    assert response.data == content
+
+    wrong_name = download_dir / "paper.pdf"
+    wrong_name.write_bytes(content)
+    assert client.post(
+        "/api/v1/pdf/read-local",
+        json={"path": str(wrong_name)},
+        headers=headers,
+    ).status_code == 400
+
+
 def test_scan_preview_and_commit_do_not_change_files(workspace):
     client = workspace[0].test_client()
     _, store, translated, guides = workspace

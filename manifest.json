@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "ScholarSplit 论文双读",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "在 Chrome 中双读论文，并用本地研究工作台管理文献、证据与综述。",
   "minimum_chrome_version": "116",
-  "permissions": ["activeTab", "storage", "sidePanel"],
+  "permissions": ["activeTab", "storage", "sidePanel", "downloads"],
   "host_permissions": ["http://127.0.0.1:8890/*"],
   "optional_host_permissions": ["https://*/*", "http://*/*", "file:///*"],
   "background": {

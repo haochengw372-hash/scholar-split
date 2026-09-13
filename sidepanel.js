@@ -153,16 +153,51 @@ async function ensurePermission(url) {
   if (!granted) throw new Error("未获得当前 PDF 所在网站的临时读取权限。");
 }
 
+async function downloadRemotePdf(url) {
+  const downloadId = await chrome.downloads.download({
+    url,
+    filename: `ScholarSplit/scholarsplit-${crypto.randomUUID()}.pdf`,
+    conflictAction: "uniquify",
+    saveAs: false
+  });
+  let item = null;
+  for (let attempt = 0; attempt < 480; attempt += 1) {
+    [item] = await chrome.downloads.search({ id: downloadId });
+    if (item?.state === "complete") break;
+    if (item?.state === "interrupted") throw new Error(`PDF 下载失败：${item.error || "下载中断"}`);
+    await sleep(250);
+  }
+  if (item?.state !== "complete") throw new Error("PDF 下载超时。");
+  try {
+    const response = await fetch(`${SERVER_URL}/api/v1/pdf/read-local`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-ScholarSplit-Client": "chrome-extension" },
+      body: JSON.stringify({ path: item.filename }),
+      cache: "no-store"
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.message || "本地服务无法读取临时 PDF。");
+    }
+    return await response.arrayBuffer();
+  } finally {
+    await chrome.downloads.removeFile(downloadId).catch(() => {});
+  }
+}
+
 async function fetchPdfFromTab(tab) {
   if (!tab?.url) throw new Error("当前标签没有可读取的网址。");
-  await ensurePermission(tab.url);
-  const response = await fetch(tab.url, { credentials: "include", cache: "force-cache" });
-  if (!response.ok) throw new Error(`读取当前 PDF 失败（HTTP ${response.status}）。`);
-  const buffer = await response.arrayBuffer();
+  let buffer;
+  if (tab.url.startsWith("file:")) {
+    await ensurePermission(tab.url);
+    const response = await fetch(tab.url);
+    if (!response.ok) throw new Error(`读取本地 PDF 失败（HTTP ${response.status}）。`);
+    buffer = await response.arrayBuffer();
+  } else {
+    buffer = await downloadRemotePdf(tab.url);
+  }
   validatePdfBytes(buffer);
-  const headerName = response.headers.get("content-disposition")?.match(/filename\*?=(?:UTF-8''|\")?([^";]+)/i)?.[1];
-  const name = headerName ? decodeURIComponent(headerName.replace(/^"|"$/g, "")) : fileNameFromUrl(tab.url, tab.title);
-  return { buffer, name, title: displayTitleForTab(tab), sourceUrl: tab.url, originalTabId: tab.id, sourceKind: tab.url.startsWith("file:") ? "local-file" : "active-tab" };
+  return { buffer, name: fileNameFromUrl(tab.url, tab.title), title: displayTitleForTab(tab), sourceUrl: tab.url, originalTabId: tab.id, sourceKind: tab.url.startsWith("file:") ? "local-file" : "chrome-download" };
 }
 
 async function postJob(endpoint, payload) {

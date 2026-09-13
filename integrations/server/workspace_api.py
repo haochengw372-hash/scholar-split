@@ -31,7 +31,7 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover - integration tim
 
 
 _MISSING = object()
-_EXTENSION_API_PATHS = frozenset({"/api/v1/library/scan"})
+_EXTENSION_API_PATHS = frozenset({"/api/v1/library/scan", "/api/v1/pdf/read-local"})
 _SECRET_FIELDS = {
     "api_key",
     "apikey",
@@ -660,6 +660,24 @@ def create_workspace_blueprint(
     def scan_import():
         _json_body(required=False)
         return run_scan(True)
+
+    @api.post("/api/v1/pdf/read-local")
+    def read_downloaded_pdf():
+        body = _json_body()
+        path = Path(str(body.get("path") or "")).expanduser().resolve()
+        if (
+            path.parent.name != "ScholarSplit"
+            or not path.name.startswith("scholarsplit-")
+            or path.suffix.lower() != ".pdf"
+            or not path.is_file()
+        ):
+            raise BadRequest("ScholarSplit temporary PDF was not found")
+        if path.stat().st_size > 100 * 1024 * 1024:
+            raise BadRequest("PDF exceeds the 100 MB limit")
+        content = path.read_bytes()
+        if b"%PDF-" not in content[:1024] or b"%%EOF" not in content[-65536:]:
+            raise BadRequest("Downloaded file is not a complete PDF")
+        return Response(content, mimetype="application/pdf")
 
     def register_crud(resource: str):
         base = f"/api/v1/{resource}"
