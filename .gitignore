@@ -1,0 +1,12 @@
+.DS_Store
+._*
+*.zip
+node_modules/
+coverage/
+dist/
+.env
+.env.*
+*.pdf
+*.xpi
+translated/
+reading-guides/

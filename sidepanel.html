@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ScholarSplit 论文双读</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div class="seal" aria-hidden="true"><img src="icons/icon-48.png" alt="" /></div>
+        <div>
+          <p class="kicker">SCHOLARSPLIT</p>
+          <h1>论文双读</h1>
+        </div>
+        <span class="server-dot" id="serverDot" title="本地服务状态"></span>
+      </header>
+
+      <section class="source-card" aria-labelledby="sourceHeading">
+        <div class="section-label">
+          <span>01</span>
+          <h2 id="sourceHeading">当前文献</h2>
+        </div>
+        <p class="source-title" id="sourceTitle">正在读取当前标签…</p>
+        <p class="source-meta" id="sourceMeta">—</p>
+      </section>
+
+      <section class="action-block">
+        <button class="primary" id="translateCurrent" type="button">
+          <span>翻译当前 PDF</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+        <div class="or"><span>或</span></div>
+        <label class="file-button" for="fileInput">
+          <span>选择已下载的 PDF</span>
+          <span class="file-note">出版社页面无法直接读取时使用</span>
+        </label>
+        <input id="fileInput" type="file" accept="application/pdf,.pdf" />
+      </section>
+
+      <section class="progress-card" id="progressCard" hidden aria-live="polite">
+        <div class="progress-head">
+          <div>
+            <p class="eyebrow">PROCESSING</p>
+            <h2 id="progressTitle">正在准备论文</h2>
+          </div>
+          <strong id="overallPercent">0%</strong>
+        </div>
+        <div class="bar"><span id="overallBar"></span></div>
+        <ol class="steps">
+          <li id="stepRead"><span>1</span><div><b>读取</b><small>校验完整 PDF</small></div></li>
+          <li id="stepTranslate"><span>2</span><div><b>翻译</b><small id="translationDetail">等待提交</small></div></li>
+          <li id="stepGuide"><span>3</span><div><b>导读</b><small id="guideDetail">等待提交</small></div></li>
+        </ol>
+      </section>
+
+      <section class="result-card" id="resultCard" hidden>
+        <p class="eyebrow">READY TO READ</p>
+        <h2>译文与导读已就绪</h2>
+        <p id="resultMeta">本机模型 · 本机处理</p>
+        <button class="reader-button" id="openReader" type="button">打开双栏阅读页</button>
+      </section>
+
+      <section class="notice" id="notice" hidden role="alert">
+        <strong id="noticeTitle">无法处理</strong>
+        <p id="noticeText"></p>
+      </section>
+
+      <footer>
+        <span>PDF 不离开本机服务</span>
+        <button id="retryServer" type="button">检查服务</button>
+      </footer>
+    </main>
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>

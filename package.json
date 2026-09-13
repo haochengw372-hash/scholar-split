@@ -1,0 +1,9 @@
+{
+  "name": "scholar-split",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check background.js && node --check lib.js && node --check sidepanel.js && node --check viewer.js"
+  }
+}

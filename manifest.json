@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "ScholarSplit 论文双读",
+  "version": "0.1.0",
+  "description": "在 Chrome 中并排阅读论文译文与结构化中文导读。",
+  "minimum_chrome_version": "116",
+  "permissions": ["activeTab", "storage", "sidePanel"],
+  "host_permissions": ["http://127.0.0.1:8890/*"],
+  "optional_host_permissions": ["https://*/*", "http://*/*", "file:///*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "ScholarSplit 论文双读"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; frame-src http://127.0.0.1:8890 blob:;"
+  }
+}

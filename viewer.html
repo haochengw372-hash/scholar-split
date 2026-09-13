@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ScholarSplit 双栏阅读</title>
+    <link rel="stylesheet" href="viewer.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand"><span><img src="icons/icon-48.png" alt="" /></span><div><small>SCHOLARSPLIT RESEARCH READER</small><strong id="documentTitle">论文译文与导读</strong></div></div>
+      <nav aria-label="阅读操作">
+        <button id="backToSource" type="button">返回原文</button>
+        <button id="openPdf" type="button">单独打开译文</button>
+        <a id="downloadPdf" href="#" download>下载译文</a>
+      </nav>
+    </header>
+    <main class="reader-grid">
+      <section class="pdf-pane" aria-label="中文译文 PDF">
+        <div class="pane-caption"><span>译文 PDF</span><small id="pdfMeta">本机文件</small></div>
+        <iframe id="pdfFrame" title="中文译文 PDF"></iframe>
+      </section>
+      <aside class="guide-pane" aria-label="论文导读">
+        <div class="guide-inner" id="guideRoot">
+          <p class="loading">正在载入导读…</p>
+        </div>
+      </aside>
+    </main>
+    <section class="fatal" id="fatal" hidden><strong>无法打开阅读页</strong><p id="fatalText"></p></section>
+    <script type="module" src="viewer.js"></script>
+  </body>
+</html>
