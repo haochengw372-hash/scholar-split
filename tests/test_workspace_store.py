@@ -283,6 +283,7 @@ class WorkspaceScannerTests(unittest.TestCase):
             self.assertEqual(second["importedCount"], 1)
             self.assertEqual(len(store.list_papers()), 1)
             self.assertEqual(len(store.list_artifacts()), 2)
+            self.assertEqual(store.list_papers()[0]["source_type"], "legacy_translation")
         self.assertEqual({pdf: pdf.read_bytes(), guide: guide.read_bytes()}, before)
 
     def test_missing_source_directories_return_empty_report(self):
@@ -312,6 +313,20 @@ class WorkspaceScannerTests(unittest.TestCase):
         self.assertEqual(papers[0]["year"], 2026)
         self.assertEqual({item["kind"] for item in artifacts}, {"original_pdf", "translated_pdf"})
         self.assertTrue(all(item["checksum"] for item in artifacts))
+
+    def test_chrome_translation_is_the_only_workspace_default_scope(self):
+        chrome_pdf = self.root / "translated" / "chrome-a1b2c3-paper.pdf"
+        legacy_pdf = self.root / "translated" / "Older Zotero Translation.pdf"
+        chrome_pdf.write_bytes(b"%PDF-1.7\nchrome\n%%EOF")
+        legacy_pdf.write_bytes(b"%PDF-1.7\nlegacy\n%%EOF")
+
+        with WorkspaceStore(self.root / "workspace.sqlite3", self.root) as store:
+            store.import_scan(store.scan_migration_sources())
+            scholar_split = store.list_papers(scope="scholarsplit")
+            archived = store.list_papers(scope="legacy")
+
+        self.assertEqual([paper["source_type"] for paper in scholar_split], ["chrome_extension"])
+        self.assertEqual([paper["source_type"] for paper in archived], ["legacy_translation"])
 
     def test_legacy_guide_title_can_match_one_unique_pdf_group(self):
         original = self.root / "translated" / "Smith - 2024 - Human Machine Communication.pdf"

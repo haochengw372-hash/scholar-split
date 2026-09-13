@@ -71,4 +71,4 @@ Python 测试覆盖索引幂等、哈希去重、导读匹配、FTS5、API 回�
 - Chrome 扩展、工作台前端和独立项目代码采用 [MIT License](LICENSE)。
 - `integrations/server/` 在与受支持的 AGPL 后端组合分发时，以及 `integrations/zotero/` 中的桥接代码，采用 AGPL-3.0-or-later；详见目录许可证和[第三方声明](THIRD_PARTY_NOTICES.md)。
 
-当前版本为 ScholarSplit `v0.2.0`。
+当前版本为 ScholarSplit `v0.2.1`。

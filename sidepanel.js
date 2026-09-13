@@ -201,6 +201,16 @@ async function persistJob(job) {
   await chrome.storage.local.set({ [`job:${job.id}`]: job, lastJobId: job.id });
 }
 
+async function syncWorkspaceLibrary() {
+  const response = await fetch(`${SERVER_URL}/api/v1/library/scan`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ commit: true }),
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error(`文献库同步失败（HTTP ${response.status}）`);
+}
+
 async function openReader(job = activeJob) {
   if (!job?.id) return;
   await chrome.tabs.create({ url: chrome.runtime.getURL(`viewer.html?job=${encodeURIComponent(job.id)}`) });
@@ -208,7 +218,7 @@ async function openReader(job = activeJob) {
 
 function showResult(job) {
   elements.resultCard.hidden = false;
-  elements.resultMeta.textContent = `${job.guideResult?.modelName || "本机模型"} · ${job.pageCount ? `${job.pageCount} 页 · ` : ""}本机处理`;
+  elements.resultMeta.textContent = `${job.guideResult?.modelName || "本机模型"} · ${job.pageCount ? `${job.pageCount} 页 · ` : ""}本机处理${job.librarySyncWarning ? " · 文献库待重试" : " · 已收录到 ScholarSplit"}`;
   setOverall(100, "处理完成");
   setStep(elements.stepRead, "done");
   setStep(elements.stepTranslate, "done");
@@ -246,6 +256,12 @@ async function finishRunningJob(job, openWhenDone) {
     completedAt: new Date().toISOString()
   };
   await persistJob(completed);
+  try {
+    await syncWorkspaceLibrary();
+  } catch (error) {
+    completed.librarySyncWarning = String(error?.message || error);
+    await persistJob(completed);
+  }
   showResult(completed);
   if (openWhenDone) await openReader(completed);
   return completed;

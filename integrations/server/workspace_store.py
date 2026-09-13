@@ -732,13 +732,18 @@ class WorkspaceStore:
                     title = str(guide.get("originalTitle") or guide.get("title") or title)
                 except (OSError, KeyError, json.JSONDecodeError):
                     pass
+            source_type = (
+                "chrome_extension"
+                if canonical_name.lower().startswith("chrome-")
+                else "legacy_translation"
+            )
             paper = self.upsert_paper(
                 {
                     "id": paper_id,
                     "title": title,
                     "authors": file_metadata["authors"],
                     "year": file_metadata["year"],
-                    "source_type": "workspace_migration",
+                    "source_type": source_type,
                     "source_key": canonical_name,
                     "metadata": {
                         "migrationMatch": match.get("match_type") if match else "pdf_group",
@@ -758,7 +763,7 @@ class WorkspaceStore:
                             "mime_type": "application/pdf",
                             "checksum": _sha256_file(path),
                             "size_bytes": path.stat().st_size,
-                            "source": "workspace_migration",
+                            "source": source_type,
                         }
                     )
                 )
@@ -775,7 +780,7 @@ class WorkspaceStore:
                                 "mime_type": "application/json",
                                 "checksum": _sha256_file(guide_path),
                                 "size_bytes": guide_path.stat().st_size,
-                                "source": "workspace_migration",
+                                "source": source_type,
                                 "metadata": {"matchType": match.get("match_type")},
                             }
                         )
@@ -1081,9 +1086,11 @@ class WorkspaceStore:
             clauses.append("rs.status = ?")
             parameters.append(status)
         if scope == "scholarsplit":
-            clauses.append("papers.source_type != 'zotero'")
+            clauses.append("papers.source_type IN ('chrome_extension', 'manual_import', 'scholarsplit')")
         elif scope == "zotero":
             clauses.append("papers.source_type = 'zotero'")
+        elif scope == "legacy":
+            clauses.append("papers.source_type = 'legacy_translation'")
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         parameters.extend((max(0, min(int(limit), 10_000)), max(0, int(offset))))
         sql = (

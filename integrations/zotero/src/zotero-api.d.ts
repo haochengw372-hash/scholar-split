@@ -59,7 +59,7 @@ declare namespace Zotero {
   }
 
   namespace Collections {
-    function getByLibrary(libraryID: number): ZoteroCollection[];
+    function getByLibrary(libraryID: number, recursive?: boolean): ZoteroCollection[];
     function get(id: number): ZoteroCollection | false;
     function getByLibraryAndKey(
       libraryID: number,

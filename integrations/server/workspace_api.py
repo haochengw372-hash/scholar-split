@@ -253,9 +253,15 @@ def _list_records(
                     return False
             elif key == "scope":
                 source_type = str(field(item, "source_type") or "")
-                if expected == "scholarsplit" and source_type == "zotero":
+                if expected == "scholarsplit" and source_type not in {
+                    "chrome_extension",
+                    "manual_import",
+                    "scholarsplit",
+                }:
                     return False
                 if expected == "zotero" and source_type != "zotero":
+                    return False
+                if expected == "legacy" and source_type != "legacy_translation":
                     return False
             elif str(field(item, key) or "") != str(expected):
                 return False

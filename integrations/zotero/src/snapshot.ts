@@ -135,7 +135,7 @@ export async function createLibrarySnapshot(
   const attachmentItems = allItems.filter((item) => item.isAttachment());
   const items = regularItems.map(regularItemSnapshot);
   const attachments = await Promise.all(attachmentItems.map(attachmentSnapshot));
-  const collections = Zotero.Collections.getByLibrary(libraryID).map(collectionSnapshot);
+  const collections = Zotero.Collections.getByLibrary(libraryID, true).map(collectionSnapshot);
   const libraryVersion = Number.isSafeInteger(library.libraryVersion)
     ? Number(library.libraryVersion)
     : 0;

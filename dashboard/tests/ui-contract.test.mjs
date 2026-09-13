@@ -39,7 +39,8 @@ test("frontend calls only the v1 workspace contracts for research actions", () =
 test("library separates ScholarSplit intake from synced Zotero folders", () => {
   assert.match(js, /ScholarSplit 文献库/);
   assert.match(js, /Zotero 文献库/);
-  assert.match(js, /全部已阅读/);
+  assert.match(js, /插件阅读记录/);
+  assert.match(js, /旧翻译归档/);
   assert.match(js, /放入 Zotero 文件夹/);
   assert.match(js, /zotero-collections/);
 });
