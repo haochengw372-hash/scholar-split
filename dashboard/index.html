@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#0b1d2a" />
+    <title>ScholarSplit · 研究工作台</title>
+    <link rel="stylesheet" href="/workspace-assets/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">跳至主要内容</a>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <a class="brand" href="#library" aria-label="ScholarSplit 文献库">
+          <img src="/workspace-assets/icon-128.png" alt="" width="38" height="38" />
+          <span><strong>ScholarSplit</strong><small>research workbench</small></span>
+        </a>
+
+        <nav class="nav-list" id="primary-nav">
+          <a href="#library" data-route="library"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h13a1 1 0 0 1 1 1v15H6a2 2 0 0 1-2-2V5a1 1 0 0 1 1-1Z" /><path d="M6 16h13M8 8h7M8 11h6" /></svg><span>文献库</span></a>
+          <a href="#reviews" data-route="reviews"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6" /><path d="m14.5 14.5 5 5M7.5 10l1.7 1.7 3.5-4" /></svg><span>综述项目</span></a>
+          <a href="#reading" data-route="reading"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5zM20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z" /></svg><span>继续阅读</span></a>
+          <a href="#tasks" data-route="tasks"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="m8 12 2.5 2.5L16 9" /></svg><span>任务</span><span class="nav-count" id="task-count" hidden></span></a>
+          <a href="#settings" data-route="settings"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1" /></svg><span>设置</span></a>
+        </nav>
+
+        <div class="sidebar-context" id="sidebar-context" aria-live="polite"></div>
+
+        <div class="sidebar-foot">
+          <div class="service-status" id="service-status" role="status">
+            <span class="status-dot"></span>
+            <span><strong>本地服务</strong><small>正在检查…</small></span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="workbench">
+        <header class="topbar">
+          <button class="menu-toggle icon-button" id="menu-toggle" type="button" aria-label="打开导航" aria-expanded="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
+          <div class="top-actions">
+            <button class="quiet-button" id="add-paper-button" type="button"><span aria-hidden="true">＋</span> 导入</button>
+            <button class="quiet-button" id="sync-button" data-action="sync" type="button"><span aria-hidden="true">↻</span> 同步</button>
+            <button class="quiet-button" data-action="new-project" type="button">新建综述项目</button>
+            <button class="quiet-button" data-action="new-collection" type="button">新建分类</button>
+          </div>
+          <form class="global-search" id="global-search" role="search">
+            <span aria-hidden="true">⌕</span>
+            <label class="sr-only" for="search-input">搜索文献、作者或项目</label>
+            <input id="search-input" name="q" type="search" autocomplete="off" placeholder="搜索标题、作者、关键词…" />
+            <kbd>⌘ K</kbd>
+          </form>
+        </header>
+
+        <main id="workspace" tabindex="-1" aria-live="polite">
+          <div class="initial-loader" aria-label="正在加载研究工作台">
+            <span></span><span></span><span></span>
+            <p>正在整理你的研究桌面…</p>
+          </div>
+        </main>
+      </section>
+    </div>
+
+    <div class="scrim" id="scrim" hidden></div>
+
+    <dialog id="modal" class="modal">
+      <form method="dialog" class="modal-card" id="modal-form">
+        <header>
+          <div><p class="eyebrow" id="modal-eyebrow">SCHOLARSPLIT</p><h2 id="modal-title">对话框</h2></div>
+          <button class="icon-button" value="cancel" aria-label="关闭">×</button>
+        </header>
+        <div id="modal-content"></div>
+        <footer id="modal-actions"></footer>
+      </form>
+    </dialog>
+
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="/workspace-assets/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scholarsplit.local/schemas/zotero/command-batch-1.0.json",
+  "title": "ScholarSplit Zotero command batch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "commands", "nextCursor"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "commands": {
+      "type": "array",
+      "items": { "$ref": "command.schema.json" }
+    },
+    "nextCursor": { "type": "string" },
+    "pollAfterMs": { "type": "integer", "minimum": 500, "maximum": 60000 }
+  }
+}

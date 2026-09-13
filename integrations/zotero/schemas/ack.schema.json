@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scholarsplit.local/schemas/zotero/ack-1.0.json",
+  "title": "ScholarSplit Zotero command acknowledgement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "commandId", "status", "completedAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "commandId": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["applied", "conflict", "rejected", "failed"] },
+    "completedAt": { "type": "string", "format": "date-time" },
+    "result": { "type": "object" },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entityType", "key", "expected", "actual"],
+      "properties": {
+        "entityType": { "enum": ["item", "collection"] },
+        "key": { "type": "string", "pattern": "^[A-Z0-9]{8}$" },
+        "expected": { "$ref": "#/$defs/version" },
+        "actual": { "oneOf": [{ "$ref": "#/$defs/version" }, { "type": "null" }] }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "maxLength": 500 }
+      }
+    }
+  },
+  "$defs": {
+    "version": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "dateModified"],
+      "properties": {
+        "version": { "type": "integer", "minimum": 0 },
+        "dateModified": { "type": "string" }
+      }
+    }
+  }
+}
