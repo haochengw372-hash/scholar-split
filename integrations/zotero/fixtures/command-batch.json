@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "commands": [
+    {
+      "commandId": "cmd-0001",
+      "libraryId": 1,
+      "issuedAt": "2026-09-13T08:01:00.000Z",
+      "type": "tag.add",
+      "tag": "to-read",
+      "itemKeys": ["AB12CD34"],
+      "preconditions": [
+        {
+          "entityType": "item",
+          "key": "AB12CD34",
+          "version": 7,
+          "dateModified": "2026-09-13 08:00:00"
+        }
+      ]
+    }
+  ],
+  "nextCursor": "cursor-0001",
+  "pollAfterMs": 2000
+}

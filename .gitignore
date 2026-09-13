@@ -4,6 +4,11 @@
 node_modules/
 coverage/
 dist/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/
+exports/
 .env
 .env.*
 *.pdf

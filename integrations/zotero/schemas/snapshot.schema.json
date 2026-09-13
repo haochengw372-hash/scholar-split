@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scholarsplit.local/schemas/zotero/snapshot-1.0.json",
+  "title": "ScholarSplit Zotero snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "bridgeId", "capturedAt", "library", "cursor", "items", "collections", "tags", "attachments"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "bridgeId": { "$ref": "#/$defs/nonEmptyString" },
+    "capturedAt": { "type": "string", "format": "date-time" },
+    "library": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 0 },
+        "name": { "type": "string" },
+        "version": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "cursor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["libraryVersion", "sequence"],
+      "properties": {
+        "libraryVersion": { "type": "integer", "minimum": 0 },
+        "sequence": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "collections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/collection" }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tag" }
+    },
+    "attachments": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/attachment" }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "key": { "type": "string", "pattern": "^[A-Z0-9]{8}$" },
+    "version": {
+      "type": "object",
+      "required": ["version", "dateModified"],
+      "properties": {
+        "version": { "type": "integer", "minimum": 0 },
+        "dateModified": { "type": "string" }
+      }
+    },
+    "creator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["creatorType"],
+      "properties": {
+        "creatorType": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "name": { "type": "string" }
+      }
+    },
+    "item": {
+      "allOf": [
+        { "$ref": "#/$defs/version" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key", "itemType", "title", "creators", "collectionKeys", "tags", "attachmentKeys", "version", "dateModified"],
+          "properties": {
+            "key": { "$ref": "#/$defs/key" },
+            "itemType": { "$ref": "#/$defs/nonEmptyString" },
+            "title": { "type": "string" },
+            "abstractNote": { "type": "string" },
+            "date": { "type": "string" },
+            "DOI": { "type": "string" },
+            "url": { "type": "string" },
+            "creators": { "type": "array", "items": { "$ref": "#/$defs/creator" } },
+            "collectionKeys": { "type": "array", "items": { "$ref": "#/$defs/key" }, "uniqueItems": true },
+            "tags": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "attachmentKeys": { "type": "array", "items": { "$ref": "#/$defs/key" }, "uniqueItems": true },
+            "version": { "type": "integer", "minimum": 0 },
+            "dateModified": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "collection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "name", "parentKey", "version", "dateModified"],
+      "properties": {
+        "key": { "$ref": "#/$defs/key" },
+        "name": { "type": "string" },
+        "parentKey": { "oneOf": [{ "$ref": "#/$defs/key" }, { "type": "null" }] },
+        "version": { "type": "integer", "minimum": 0 },
+        "dateModified": { "type": "string" }
+      }
+    },
+    "tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "itemKeys"],
+      "properties": {
+        "name": { "type": "string" },
+        "itemKeys": { "type": "array", "items": { "$ref": "#/$defs/key" }, "uniqueItems": true }
+      }
+    },
+    "attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "parentItemKey", "title", "filename", "contentType", "linkMode", "url", "hasLocalFile", "version", "dateModified"],
+      "properties": {
+        "key": { "$ref": "#/$defs/key" },
+        "parentItemKey": { "oneOf": [{ "$ref": "#/$defs/key" }, { "type": "null" }] },
+        "title": { "type": "string" },
+        "filename": { "type": ["string", "null"] },
+        "contentType": { "type": ["string", "null"] },
+        "linkMode": { "type": ["integer", "null"] },
+        "url": { "type": ["string", "null"] },
+        "hasLocalFile": { "type": "boolean" },
+        "version": { "type": "integer", "minimum": 0 },
+        "dateModified": { "type": "string" }
+      }
+    }
+  }
+}

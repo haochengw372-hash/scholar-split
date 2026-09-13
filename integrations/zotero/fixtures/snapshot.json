@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "bridgeId": "desktop-main",
+  "capturedAt": "2026-09-13T08:00:00.000Z",
+  "library": { "id": 1, "name": "My Library", "version": 42 },
+  "cursor": { "libraryVersion": 42, "sequence": 1 },
+  "items": [
+    {
+      "key": "AB12CD34",
+      "itemType": "journalArticle",
+      "title": "Human-machine communication",
+      "DOI": "10.0000/example",
+      "creators": [{ "creatorType": "author", "firstName": "Ada", "lastName": "Liu" }],
+      "collectionKeys": ["CO11EC22"],
+      "tags": ["HMC"],
+      "attachmentKeys": ["AT12CH34"],
+      "version": 7,
+      "dateModified": "2026-09-13 08:00:00"
+    }
+  ],
+  "collections": [
+    {
+      "key": "CO11EC22",
+      "name": "Reading queue",
+      "parentKey": null,
+      "version": 4,
+      "dateModified": "2026-09-12 10:00:00"
+    }
+  ],
+  "tags": [{ "name": "HMC", "itemKeys": ["AB12CD34"] }],
+  "attachments": [
+    {
+      "key": "AT12CH34",
+      "parentItemKey": "AB12CD34",
+      "title": "Full Text PDF",
+      "filename": "paper.pdf",
+      "contentType": "application/pdf",
+      "linkMode": 0,
+      "url": null,
+      "hasLocalFile": true,
+      "version": 2,
+      "dateModified": "2026-09-13 07:59:00"
+    }
+  ]
+}

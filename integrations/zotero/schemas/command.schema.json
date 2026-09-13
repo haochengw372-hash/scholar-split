@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scholarsplit.local/schemas/zotero/command-1.0.json",
+  "title": "ScholarSplit Zotero command",
+  "oneOf": [
+    { "$ref": "#/$defs/collectionCommand" },
+    { "$ref": "#/$defs/tagCommand" },
+    { "$ref": "#/$defs/noteCommand" },
+    { "$ref": "#/$defs/importPaperCommand" }
+  ],
+  "$defs": {
+    "key": { "type": "string", "pattern": "^[A-Z0-9]{8}$" },
+    "baseProperties": {
+      "type": "object",
+      "properties": {
+        "commandId": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "libraryId": { "type": "integer", "minimum": 0 },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "preconditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/precondition" }
+        }
+      }
+    },
+    "precondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entityType", "key", "version", "dateModified"],
+      "properties": {
+        "entityType": { "enum": ["item", "collection"] },
+        "key": { "$ref": "#/$defs/key" },
+        "version": { "type": "integer", "minimum": 0 },
+        "dateModified": { "type": "string" }
+      }
+    },
+    "collectionCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commandId", "libraryId", "issuedAt", "type", "collectionKey", "itemKeys"],
+      "properties": {
+        "commandId": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "libraryId": { "type": "integer", "minimum": 0 },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "preconditions": { "type": "array", "items": { "$ref": "#/$defs/precondition" } },
+        "type": { "enum": ["collection.addItems", "collection.removeItems"] },
+        "collectionKey": { "$ref": "#/$defs/key" },
+        "itemKeys": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } }
+      }
+    },
+    "tagCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commandId", "libraryId", "issuedAt", "type", "tag", "itemKeys"],
+      "properties": {
+        "commandId": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "libraryId": { "type": "integer", "minimum": 0 },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "preconditions": { "type": "array", "items": { "$ref": "#/$defs/precondition" } },
+        "type": { "enum": ["tag.add", "tag.remove"] },
+        "tag": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "itemKeys": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } }
+      }
+    },
+    "noteCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commandId", "libraryId", "issuedAt", "type", "parentItemKey", "noteHtml"],
+      "properties": {
+        "commandId": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "libraryId": { "type": "integer", "minimum": 0 },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "preconditions": { "type": "array", "items": { "$ref": "#/$defs/precondition" } },
+        "type": { "const": "note.createChild" },
+        "parentItemKey": { "$ref": "#/$defs/key" },
+        "noteHtml": { "type": "string", "maxLength": 524288 }
+      }
+    },
+    "importPaperCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commandId", "libraryId", "issuedAt", "type", "collectionKey", "paper", "attachmentPath"],
+      "properties": {
+        "commandId": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "libraryId": { "type": "integer", "minimum": 0 },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "preconditions": { "type": "array", "items": { "$ref": "#/$defs/precondition" } },
+        "type": { "const": "item.importPaper" },
+        "collectionKey": { "$ref": "#/$defs/key" },
+        "paper": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title", "authors"],
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 2000 },
+            "authors": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 500 } },
+            "year": { "type": ["integer", "null"], "minimum": 1000, "maximum": 3000 },
+            "doi": { "type": ["string", "null"], "maxLength": 500 },
+            "abstract": { "type": "string", "maxLength": 200000 },
+            "url": { "type": ["string", "null"], "maxLength": 4000 }
+          }
+        },
+        "attachmentPath": { "type": "string", "minLength": 5, "maxLength": 4096, "pattern": "\\.[Pp][Dd][Ff]$" }
+      }
+    }
+  }
+}
