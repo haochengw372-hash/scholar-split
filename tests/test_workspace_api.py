@@ -141,6 +141,23 @@ def test_rejects_non_loopback_cross_origin_and_bad_json(workspace):
     assert local_v6.headers["X-Content-Type-Options"] == "nosniff"
 
 
+def test_chrome_extension_origin_is_limited_to_intake_routes(workspace):
+    client = workspace[0].test_client()
+    headers = {
+        "Origin": "chrome-extension://abcdefghijklmnop",
+        "X-ScholarSplit-Client": "chrome-extension",
+    }
+    allowed = client.post("/api/v1/library/scan", json={"commit": False}, headers=headers)
+    assert allowed.status_code == 200
+    assert allowed.headers["Access-Control-Allow-Origin"] == headers["Origin"]
+    assert client.get("/api/v1/summary", headers=headers).status_code == 403
+    assert client.post(
+        "/api/v1/library/scan",
+        json={"commit": False},
+        headers={"Origin": headers["Origin"]},
+    ).status_code == 403
+
+
 def test_scan_preview_and_commit_do_not_change_files(workspace):
     client = workspace[0].test_client()
     _, store, translated, guides = workspace

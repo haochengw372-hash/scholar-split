@@ -32,6 +32,20 @@ export function fileNameFromUrl(url, fallback = "paper.pdf") {
   }
 }
 
+export function displayTitleForTab(tab) {
+  if (!tab?.url) return "未找到当前标签";
+  const title = String(tab.title || "").trim();
+  if (title && title.length <= 180 && !/^https?:\/\//i.test(title) && !/[?&]X-Amz-/i.test(title)) {
+    return title;
+  }
+  return fileNameFromUrl(tab.url, "当前论文.pdf");
+}
+
+export function jobMatchesTab(job, tab) {
+  if (!job?.sourceUrl || !tab?.url) return false;
+  return String(job.sourceUrl) === String(tab.url);
+}
+
 export function permissionPatternForUrl(url) {
   const parsed = new URL(url);
   if (parsed.protocol === "file:") return "file:///*";

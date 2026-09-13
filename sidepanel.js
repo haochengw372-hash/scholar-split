@@ -6,9 +6,11 @@ import {
   boundedProgress,
   buildGuidePayload,
   buildTranslatePayload,
+  displayTitleForTab,
   fileNameFromUrl,
   isCompleteTask,
   isFailedTask,
+  jobMatchesTab,
   mergeInvokedTab,
   permissionPatternForUrl,
   pickTranslationFile,
@@ -63,7 +65,7 @@ function sourceLabel(tab) {
   try {
     const parsed = new URL(tab.url);
     return {
-      title: tab.title || fileNameFromUrl(tab.url),
+      title: displayTitleForTab(tab),
       meta: parsed.protocol === "file:" ? "本地文件" : parsed.hostname
     };
   } catch {
@@ -71,8 +73,21 @@ function sourceLabel(tab) {
   }
 }
 
+function resetDocumentState() {
+  activeJob = null;
+  elements.resultCard.hidden = true;
+  elements.progressCard.hidden = true;
+  clearNotice();
+  setStep(elements.stepRead, "");
+  setStep(elements.stepTranslate, "");
+  setStep(elements.stepGuide, "");
+  setOverall(0, "正在准备论文");
+}
+
 async function refreshSource() {
-  activeTab = await getActiveTab();
+  const nextTab = await getActiveTab();
+  if (activeTab?.url && nextTab?.url && activeTab.url !== nextTab.url) resetDocumentState();
+  activeTab = nextTab;
   const label = sourceLabel(activeTab);
   elements.sourceTitle.textContent = label.title;
   elements.sourceMeta.textContent = label.meta;
@@ -140,13 +155,13 @@ async function ensurePermission(url) {
 async function fetchPdfFromTab(tab) {
   if (!tab?.url) throw new Error("当前标签没有可读取的网址。");
   await ensurePermission(tab.url);
-  const response = await fetch(tab.url, { credentials: "include", cache: "no-store" });
+  const response = await fetch(tab.url, { credentials: "include", cache: "force-cache" });
   if (!response.ok) throw new Error(`读取当前 PDF 失败（HTTP ${response.status}）。`);
   const buffer = await response.arrayBuffer();
   validatePdfBytes(buffer);
   const headerName = response.headers.get("content-disposition")?.match(/filename\*?=(?:UTF-8''|\")?([^";]+)/i)?.[1];
   const name = headerName ? decodeURIComponent(headerName.replace(/^"|"$/g, "")) : fileNameFromUrl(tab.url, tab.title);
-  return { buffer, name, title: tab.title || name, originalTabId: tab.id, sourceKind: "active-tab" };
+  return { buffer, name, title: displayTitleForTab(tab), sourceUrl: tab.url, originalTabId: tab.id, sourceKind: tab.url.startsWith("file:") ? "local-file" : "active-tab" };
 }
 
 async function postJob(endpoint, payload) {
@@ -204,7 +219,7 @@ async function persistJob(job) {
 async function syncWorkspaceLibrary() {
   const response = await fetch(`${SERVER_URL}/api/v1/library/scan`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-ScholarSplit-Client": "chrome-extension" },
     body: JSON.stringify({ commit: true }),
     cache: "no-store"
   });
@@ -288,7 +303,7 @@ async function runWorkflow(source) {
     const jobId = hash;
     const cached = (await chrome.storage.local.get(`job:${jobId}`))[`job:${jobId}`];
     if (cached?.status === "complete" && cached.translationFile && cached.guideResult?.guide) {
-      await persistJob({ ...cached, originalTabId: source.originalTabId ?? cached.originalTabId });
+      await persistJob({ ...cached, sourceUrl: source.sourceUrl || cached.sourceUrl, originalTabId: source.originalTabId ?? cached.originalTabId });
       showResult(activeJob);
       running = false;
       elements.translateCurrent.disabled = false;
@@ -317,6 +332,7 @@ async function runWorkflow(source) {
       sourceName: source.name,
       sourceTitle: source.title,
       sourceKind: source.sourceKind,
+      sourceUrl: source.sourceUrl,
       originalTabId: source.originalTabId,
       uploadName,
       translationTaskId,
@@ -351,7 +367,7 @@ async function translateFile(file) {
   clearNotice();
   try {
     const buffer = await file.arrayBuffer();
-    await runWorkflow({ buffer, name: file.name, title: file.name.replace(/\.pdf$/i, ""), sourceKind: "file-picker" });
+    await runWorkflow({ buffer, name: file.name, title: file.name.replace(/\.pdf$/i, ""), sourceUrl: `file-picker:${file.name}:${file.size}:${file.lastModified}`, sourceKind: "file-picker" });
   } catch (error) {
     showNotice("无法读取所选文件", error instanceof Error ? error.message : String(error));
   }
@@ -362,6 +378,7 @@ async function restoreLastJob() {
   if (!lastJobId) return;
   const saved = (await chrome.storage.local.get(`job:${lastJobId}`))[`job:${lastJobId}`];
   if (!saved) return;
+  if (!jobMatchesTab(saved, activeTab)) return;
   activeJob = saved;
   if (saved.status === "complete") {
     showResult(saved);

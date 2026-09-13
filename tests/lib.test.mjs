@@ -3,8 +3,10 @@ import test from "node:test";
 import {
   buildGuidePayload,
   buildTranslatePayload,
+  displayTitleForTab,
   fileNameFromUrl,
   mergeInvokedTab,
+  jobMatchesTab,
   permissionPatternForUrl,
   pickTranslationFile,
   safeFileName,
@@ -38,6 +40,14 @@ test("normalizes source PDF names without generated suffixes", () => {
   assert.equal(safeFileName("paper.compare.pdf"), "paper.pdf");
   assert.equal(safeFileName("bad:name.pdf"), "bad_name.pdf");
   assert.equal(fileNameFromUrl("https://example.com/path/paper.pdf?token=secret"), "paper.pdf");
+});
+
+test("uses a short PDF label and restores only the matching document", () => {
+  const signedUrl = "https://pdf.example.org/main.pdf?X-Amz-Signature=secret";
+  assert.equal(displayTitleForTab({ url: signedUrl, title: signedUrl }), "main.pdf");
+  assert.equal(jobMatchesTab({ sourceUrl: signedUrl }, { url: signedUrl }), true);
+  assert.equal(jobMatchesTab({ sourceUrl: "https://example.org/old.pdf" }, { url: signedUrl }), false);
+  assert.equal(jobMatchesTab({ originalTabId: 1 }, { id: 1, url: signedUrl }), false);
 });
 
 test("builds minimal permission patterns", () => {

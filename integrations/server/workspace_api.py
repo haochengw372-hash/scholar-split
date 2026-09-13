@@ -31,6 +31,7 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover - integration tim
 
 
 _MISSING = object()
+_EXTENSION_API_PATHS = frozenset({"/api/v1/library/scan"})
 _SECRET_FIELDS = {
     "api_key",
     "apikey",
@@ -419,7 +420,15 @@ def create_workspace_blueprint(
         origin = request.headers.get("Origin")
         if origin:
             expected = request.host_url.rstrip("/")
-            if origin.rstrip("/") != expected:
+            extension_request = (
+                origin.startswith("chrome-extension://")
+                and request.path in _EXTENSION_API_PATHS
+                and (
+                    request.method == "OPTIONS"
+                    or request.headers.get("X-ScholarSplit-Client") == "chrome-extension"
+                )
+            )
+            if origin.rstrip("/") != expected and not extension_request:
                 raise Forbidden("Cross-origin requests are not allowed")
 
     @api.after_request
@@ -427,6 +436,12 @@ def create_workspace_blueprint(
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         if request.path.startswith("/api/v1/"):
             response.headers.setdefault("Cache-Control", "no-store")
+        origin = request.headers.get("Origin", "")
+        if origin.startswith("chrome-extension://") and request.path in _EXTENSION_API_PATHS:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Vary"] = "Origin"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-ScholarSplit-Client"
+            response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
         return response
 
     @api.errorhandler(StoreCapabilityError)
