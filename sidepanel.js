@@ -43,6 +43,7 @@ const elements = {
   notice: document.querySelector("#notice"),
   noticeTitle: document.querySelector("#noticeTitle"),
   noticeText: document.querySelector("#noticeText"),
+  retryCurrent: document.querySelector("#retryCurrent"),
   retryServer: document.querySelector("#retryServer")
 };
 
@@ -408,6 +409,7 @@ elements.fileInput.addEventListener("change", () => {
   if (file) void translateFile(file);
 });
 elements.openReader.addEventListener("click", () => void openReader());
+elements.retryCurrent.addEventListener("click", () => void translateCurrent());
 elements.retryServer.addEventListener("click", () => void checkServer());
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "session" && changes.invokedTab) void refreshSource();

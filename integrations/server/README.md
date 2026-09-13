@@ -16,3 +16,7 @@ HTTP endpoint.
 Files in this integration directory are distributed under AGPL-3.0-or-later
 when combined with the supported AGPL host service. The independent dashboard
 and Chrome extension remain MIT licensed.
+
+`patches/reading-guide-json-retry.patch` adds one bounded retry only when the
+model response cannot be parsed as JSON. Apply it from the compatible host
+server root with `patch -p1 < scholarsplit/patches/reading-guide-json-retry.patch`.

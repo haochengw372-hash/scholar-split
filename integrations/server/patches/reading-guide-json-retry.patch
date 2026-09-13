@@ -1,0 +1,25 @@
+--- a/utils/reading_guide.py
++++ b/utils/reading_guide.py
+@@ -333,6 +333,7 @@ def request_deepseek_guide(
+     prompt: str,
+     endpoint: str = "https://api.deepseek.com/v1/chat/completions",
+     timeout: int = 180,
++    retry_invalid_json: bool = True,
+ ) -> tuple[dict[str, Any], str]:
+     payload = {
+         "model": model,
+@@ -392,6 +393,15 @@ def request_deepseek_guide(
+             raise ValueError(
+                 "DeepSeek reading-guide JSON was truncated at the output-token limit"
+             ) from exc
++        if retry_invalid_json and str(exc) == "DeepSeek returned an invalid reading-guide JSON response":
++            return request_deepseek_guide(
++                api_key=api_key,
++                model=model,
++                prompt=prompt + "\n\nYour previous response was invalid JSON. Return one complete JSON object only.",
++                endpoint=endpoint,
++                timeout=timeout,
++                retry_invalid_json=False,
++            )
+         raise
+     return guide, str(body.get("model") or model)
