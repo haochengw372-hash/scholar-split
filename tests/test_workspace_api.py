@@ -274,6 +274,33 @@ def test_jobs_events_and_summary(workspace):
     assert summary["counts"]["papers"] == 2
 
 
+def test_defensive_writing_starts_a_local_job(workspace):
+    class WritingService:
+        def start(self, encoded_pdf, filename):
+            assert encoded_pdf == "cGRm"
+            assert filename == "paper.pdf"
+            return {"id": "review-1", "status": "queued"}
+
+    app, store, translated, guides = workspace
+    second_app = Flask("writing-review")
+    second_app.register_blueprint(
+        create_workspace_blueprint(
+            store,
+            translated.parent / "dashboard",
+            translated,
+            guides,
+            writing_service=WritingService(),
+        )
+    )
+    second_app.config.update(TESTING=True)
+    response = second_app.test_client().post(
+        "/api/v1/writing/defensive",
+        json={"fileName": "paper.pdf", "fileContent": "cGRm"},
+    )
+    assert response.status_code == 202
+    assert response.get_json()["data"]["id"] == "review-1"
+
+
 def test_compatibility_constructor_and_classic_helper(tmp_path: Path):
     translated = tmp_path / "translated"
     guides = tmp_path / "guides"

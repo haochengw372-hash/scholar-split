@@ -396,6 +396,7 @@ def create_workspace_blueprint(
     guide_dir: str | Path,
     pairing_token: str | None = None,
     research_service: Any | None = None,
+    writing_service: Any | None = None,
 ) -> Blueprint:
     """Build the v0.2 blueprint without modifying or starting a Flask app."""
 
@@ -1001,6 +1002,17 @@ def create_workspace_blueprint(
     @api.get("/api/v1/jobs/<record_id>")
     def job_detail(record_id: str):
         return _success(_get_record(store, "jobs", record_id))
+
+    @api.post("/api/v1/writing/defensive")
+    def analyze_defensive_writing():
+        if writing_service is None:
+            raise StoreCapabilityError("Writing review service is not configured")
+        body = _json_body()
+        encoded_pdf = body.get("fileContent")
+        if not isinstance(encoded_pdf, str):
+            raise BadRequest("fileContent must be base64 PDF data")
+        filename = str(body.get("fileName") or "paper.pdf")
+        return _success(writing_service.start(encoded_pdf, filename), 202)
 
     @api.get("/api/v1/events")
     def events():

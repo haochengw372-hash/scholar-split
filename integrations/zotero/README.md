@@ -66,6 +66,13 @@ acknowledgement is received.
 
 ## Zotero plugin integration
 
+`host-plugin/defensiveWriting.ts` is the Zotero-hosted action for the
+DeepSeek writing review. It sends the selected PDF to the local companion,
+waits for a completed job, and uses Zotero's annotation API to save red
+highlights with the reason and revision suggestion. It does not modify the PDF
+or write Zotero's database directly. The host plugin wires this action into
+the PDF context menu and reader sidebar.
+
 Include `src/` in the plugin's TypeScript build and initialize the bridge after
 Zotero has finished loading:
 

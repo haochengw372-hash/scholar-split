@@ -809,7 +809,8 @@ class WorkspaceStore:
 
     def _columns(self, table: str) -> set[str]:
         self._validate_table(table)
-        return {str(row[1]) for row in self._connection.execute(f"PRAGMA table_info({table})")}
+        with self._lock:
+            return {str(row[1]) for row in self._connection.execute(f"PRAGMA table_info({table})")}
 
     @staticmethod
     def _validate_table(table: str) -> None:
