@@ -8,6 +8,7 @@ function fixture() {
     const items = new Map<number, any>();
     const readers = new Map<string, { itemID: number }>();
     const opened: Array<{ id: number; pageIndex: number }> = [];
+    const localeResources: string[] = [];
     let hooks: any;
     let originalCalls = 0;
     let original: any = null;
@@ -96,7 +97,15 @@ function fixture() {
         }
     }
     const body = Object.assign(new Element("body"), {
-        ownerDocument: { createElement: (tag: string) => new Element(tag) },
+        ownerDocument: {
+            createElement: (tag: string) => new Element(tag),
+            defaultView: {
+                MozXULElement: {
+                    insertFTLIfNeeded: (name: string) =>
+                        localeResources.push(name),
+                },
+            },
+        },
         closest: () => ({ tabID: "this-reader" }),
     });
     function pdf(id: number, parentItemID: number | false = 100) {
@@ -127,6 +136,7 @@ function fixture() {
         parent,
         readers,
         opened,
+        localeResources,
         get originalCalls() {
             return originalCalls;
         },
@@ -156,6 +166,113 @@ test("chat reads the selected translated or standalone PDF directly without reso
         standalone,
     );
     assert.equal(f.originalCalls, 0);
+});
+
+test("same-item notification preserves loaded chat when Zotero skips duplicate renders", async () => {
+    const f = fixture();
+    const pdf = f.pdf(2);
+    const hooks = f.register();
+    hooks.onInit({
+        body: f.body,
+        doc: f.body.ownerDocument,
+        refresh: async () => {},
+    });
+    f.factory.request = async (_base: string, path: string) =>
+        path === "/documents"
+            ? { documentId: "loaded", pageCount: 12, textPageCount: 12 }
+            : { messages: [] };
+    const props = {
+        body: f.body,
+        item: pdf,
+        tabType: "reader",
+        setEnabled: () => {},
+        setSectionSummary: () => {},
+    };
+    await hooks.onAsyncRender(props);
+    const pane = f.factory.panes.get(f.body);
+    pane.question = "Keep my draft";
+    f.factory.render(f.body, pane);
+    const ticket = pane.ticket;
+    // ItemPaneSectionElementBase.item calls itemChange even for the same item;
+    // its dependency cache then skips render and asyncRender for this assignment.
+    hooks.onItemChange(props);
+    assert.ok(f.body.all().some((node) => node.tag === "textarea"));
+    assert.equal(f.factory.panes.get(f.body), pane);
+    assert.equal(pane.question, "Keep my draft");
+    assert.ok(pane.gate.current(ticket, pane.selection));
+});
+
+test("sync render and reopening show the composer before any PDF request completes", () => {
+    const f = fixture();
+    const hooks = f.register();
+    hooks.onInit({
+        body: f.body,
+        doc: f.body.ownerDocument,
+        refresh: async () => {},
+    });
+    assert.deepEqual(f.localeResources, ["scholarsplit-addon.ftl"]);
+    const props = {
+        body: f.body,
+        item: f.pdf(1),
+        tabType: "reader",
+        setEnabled: () => {},
+    };
+    hooks.onRender(props);
+    assert.ok(f.body.all().some((node) => node.tag === "textarea"));
+    const send = f.body
+        .all()
+        .find(
+            (node) => node.tag === "button" && node.textContent === "chat-send",
+        )!;
+    assert.equal((send as any).disabled, true);
+    f.body.replaceChildren();
+    hooks.onRender(props);
+    assert.ok(f.body.all().some((node) => node.tag === "textarea"));
+});
+
+test("load failures still expose the composer and retry without enabling send", () => {
+    const f = fixture();
+    const hooks = f.register();
+    hooks.onInit({
+        body: f.body,
+        doc: f.body.ownerDocument,
+        refresh: async () => {},
+    });
+    const pane = f.factory.panes.get(f.body);
+    pane.error = "Synthetic upload failed";
+    pane.question = "Unsent question";
+    pane.refresh = async () => {};
+    f.factory.render(f.body, pane);
+    assert.ok(f.body.all().some((node) => node.tag === "textarea"));
+    assert.ok(f.body.all().some((node) => node.textContent === "chat-retry"));
+    const send = f.body
+        .all()
+        .find(
+            (node) => node.tag === "button" && node.textContent === "chat-send",
+        )!;
+    assert.equal((send as any).disabled, true);
+});
+
+test("a different reader attachment under the same parent invalidates the old conversation", async () => {
+    const f = fixture();
+    const hooks = f.register();
+    f.readers.set("this-reader", { itemID: f.pdf(1).id });
+    f.factory.request = async (_base: string, path: string) =>
+        path === "/documents"
+            ? { documentId: "first", pageCount: 1, textPageCount: 1 }
+            : { messages: [] };
+    const props = {
+        body: f.body,
+        item: f.parent,
+        tabType: "reader",
+        setEnabled: () => {},
+        setSectionSummary: () => {},
+    };
+    await hooks.onAsyncRender(props);
+    const pane = f.factory.panes.get(f.body);
+    f.readers.set("this-reader", { itemID: f.pdf(2).id });
+    hooks.onItemChange(props);
+    assert.ok(!pane.gate.current(pane.ticket, pane.selection));
 });
 
 test("parent reader context reads its exact open PDF even when originals are absent or ambiguous", async () => {

@@ -25,6 +25,7 @@ interface ChatPane {
     gate: ChatRenderGate;
     ticket: number;
     selection: string;
+    contextKey: string;
     source?: Zotero.Item;
     document?: ChatDocument;
     base: string;
@@ -51,7 +52,10 @@ export class PaperChatFactory {
             pluginID: config.addonID,
             header: { l10nID: getLocaleID("chat-pane-header"), icon },
             sidenav: { l10nID: getLocaleID("chat-pane-sidenav"), icon },
-            onInit: ({ body, refresh }) => {
+            onInit: ({ body, refresh, doc }) => {
+                (doc.defaultView as any).MozXULElement.insertFTLIfNeeded(
+                    `${config.addonRef}-addon.ftl`,
+                );
                 this.refreshers.set(body, refresh);
                 this.panes.set(body, this.newPane());
             },
@@ -60,12 +64,31 @@ export class PaperChatFactory {
                 this.panes.delete(body);
                 this.refreshers.delete(body);
             },
-            onItemChange: ({ body, item, setEnabled }) => {
-                this.panes.get(body)?.gate.invalidate();
+            onItemChange: ({ body, item, tabType, setEnabled }) => {
                 setEnabled(this.supportsItem(item));
-                body.replaceChildren();
+                const pane = this.panes.get(body);
+                if (
+                    pane &&
+                    pane.contextKey !== this.contextKey(item, tabType, body)
+                ) {
+                    pane.gate.invalidate();
+                    this.panes.delete(body);
+                }
             },
-            onRender: () => {},
+            onRender: ({ body, item, tabType, setEnabled }) => {
+                setEnabled(this.supportsItem(item));
+                if (!this.supportsItem(item)) return;
+                const key = this.contextKey(item, tabType, body);
+                let pane = this.panes.get(body);
+                if (!pane || pane.contextKey !== key) {
+                    pane?.gate.invalidate();
+                    pane = this.newPane();
+                    pane.contextKey = key;
+                    pane.refresh = this.refreshers.get(body);
+                    this.panes.set(body, pane);
+                }
+                this.render(body, pane);
+            },
             onAsyncRender: async ({
                 body,
                 item,
@@ -78,6 +101,10 @@ export class PaperChatFactory {
                 const previous = this.panes.get(body);
                 previous?.gate.invalidate();
                 const pane = this.newPane();
+                pane.contextKey = this.contextKey(item, tabType, body);
+                if (previous?.contextKey === pane.contextKey) {
+                    pane.question = previous.question;
+                }
                 pane.refresh = this.refreshers.get(body);
                 pane.selection = `${item.libraryID}:${item.key}`;
                 pane.ticket = pane.gate.begin(pane.selection);
@@ -148,6 +175,7 @@ export class PaperChatFactory {
             gate: new ChatRenderGate(),
             ticket: 0,
             selection: "",
+            contextKey: "",
             messages: [],
             base: PDF2zhHelperFactory.normalizeServerUrl(
                 PDF2zhHelperFactory.getServerConfig().serverUrl,
@@ -161,6 +189,21 @@ export class PaperChatFactory {
 
     private static supportsItem(item: Zotero.Item): boolean {
         return item.isRegularItem() || item.isPDFAttachment();
+    }
+
+    private static contextKey(
+        item: Zotero.Item,
+        tabType: string,
+        body: HTMLDivElement,
+    ): string {
+        const section = body.closest("item-pane-custom-section") as
+            | (Element & { tabID?: string })
+            | null;
+        const reader =
+            tabType === "reader" && section?.tabID
+                ? Zotero.Reader.getByTabID(section.tabID)
+                : null;
+        return `${item.libraryID}:${item.key}:${tabType}:${reader?.itemID || item.id}`;
     }
 
     private static isCurrent(body: HTMLDivElement, pane: ChatPane): boolean {
@@ -445,7 +488,6 @@ export class PaperChatFactory {
                 });
                 root.append(retry);
             }
-            return;
         }
         const textarea = make("textarea");
         textarea.value = pane.question;
@@ -458,10 +500,11 @@ export class PaperChatFactory {
             "",
             getString(pane.busy ? "chat-answering" : "chat-send"),
         );
-        send.disabled = pane.busy || !pane.question.trim();
+        send.disabled = pane.busy || !pane.document || !pane.question.trim();
         textarea.addEventListener("input", () => {
             pane.question = textarea.value;
-            send.disabled = pane.busy || !pane.question.trim();
+            send.disabled =
+                pane.busy || !pane.document || !pane.question.trim();
         });
         let composing = false;
         textarea.addEventListener("compositionstart", () => {

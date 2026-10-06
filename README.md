@@ -12,7 +12,7 @@ ScholarSplit 把 Chrome 里的论文翻译、结构化导读和本机文献库�
 
 ![ScholarSplit 文献工作台](design/qa/library-dual-source.png)
 
-## v0.3.2 能做什么
+## v0.3.3 能做什么
 
 - 在 Chrome 中处理在线或本地 PDF，并排查看译文与中文导读。
 - 完整 Zotero 插件与本地翻译主机可从本仓库构建、安装；默认集成 PDF2zh-next 与 BabelDOC，另可安装旧版 PDF2zh。
@@ -24,6 +24,7 @@ ScholarSplit 把 Chrome 里的论文翻译、结构化导读和本机文献库�
 - 通过受控命令队列与 Zotero 同步集合、标签和子笔记；从不直接写 `zotero.sqlite`。
 - Zotero 可一键用 DeepSeek 审阅论文中的过度防御性措辞；可精确定位的句子以红色批注标记并附修改方向。
 - Zotero 右侧新增“论文问答”：直接提问当前 PDF，显示当前 PDF 摘录与可跳转页码，按论文保存本地对话。
+- 问答输入框在读取中和读取失败时仍显示；同一 PDF 的条目刷新不会清空聊天面板。
 - Zotero 导读直接读取当前打开或选中的 PDF，支持原文、译文和双语件，不再要求找到配对附件；引用对应实际输入 PDF 页码。
 - 浏览器不读取模型 API Key；配对令牌仅保存在本机且文件权限为 `0600`。
 
@@ -86,4 +87,4 @@ Python 测试覆盖索引幂等、哈希去重、导读匹配、FTS5、API 回�
 - Chrome 扩展、工作台前端和独立项目代码采用 [Apache License 2.0](LICENSE)，版权归 Haocheng Wang 及项目贡献者；署名信息见 [NOTICE](NOTICE)。
 - 完整翻译主机、Zotero 插件和 `integrations/` 仍采用 AGPL-3.0-or-later；根目录的 Apache-2.0 不会覆盖第三方许可证。详见[第三方声明](THIRD_PARTY_NOTICES.md)与[上游修改记录](docs/UPSTREAM.md)。
 
-当前版本为 ScholarSplit `v0.3.2`，Zotero 插件 `4.1.8-guide.15`。此前 MIT 发行版本保持原许可证。
+当前版本为 ScholarSplit `v0.3.3`，Zotero 插件 `4.1.8-guide.16`。此前 MIT 发行版本保持原许可证。

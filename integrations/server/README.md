@@ -68,6 +68,11 @@ question/answer pairs are saved. Conversations and extracted text persist under
 `data/paper-chat/conversations.sqlite3` (mode `0600`, private directory `0700`).
 No PDF copy, embeddings dependency, or model key is stored in that database.
 
+The composer remains visible while PDF registration is pending or fails; sending
+is disabled until that PDF is ready. Same-item metadata notifications preserve
+the loaded conversation, and synchronous rendering reconstructs the panel when
+it is reopened. Switching the actual PDF still invalidates pending responses.
+
 ## Current-PDF reading guides
 
 The Zotero guide reads the open or explicitly selected PDF, including translated
