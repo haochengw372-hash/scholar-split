@@ -19,12 +19,13 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install -r integrations/server/host/requirements.txt pytest
+      - name: Install Zotero test tooling
+        run: npm --prefix integrations/zotero/plugin ci --ignore-scripts --no-audit --no-fund
       - run: npm test
       - run: npm run check
       - name: Build the complete Zotero plugin
         run: |
           cd integrations/zotero/plugin
-          npm ci --ignore-scripts --no-audit --no-fund
           npm test
           npm run build
       - name: Package the complete release

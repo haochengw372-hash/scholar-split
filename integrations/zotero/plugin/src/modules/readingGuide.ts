@@ -12,11 +12,7 @@ import {
     storedGuideFromNoteHTML,
     storedGuideToNoteHTML,
 } from "./readingGuideUtils";
-import {
-    pdfIdentityAttachments,
-    rememberPDFSource,
-} from "./attachmentIdentity";
-import { selectGuidePDF } from "./attachmentIdentityUtils";
+import { originalPDFAttachment } from "./attachmentIdentity";
 
 const GUIDE_TAG = "pdf2zh-reading-guide";
 const PANE_ID = "pdf2zh-reading-guide";
@@ -28,6 +24,11 @@ interface GuideSelection {
     display: Zotero.Item;
     sourcePath: string;
     displayPath: string;
+}
+
+interface GuideContext {
+    tabType: "library" | "reader";
+    body: HTMLDivElement;
 }
 
 export class ReadingGuideFactory {
@@ -58,8 +59,11 @@ export class ReadingGuideFactory {
                     type: "regenerate",
                     icon: "chrome://zotero/skin/16/universal/sync.svg",
                     l10nID: getLocaleID("guide-regenerate"),
-                    onClick: ({ item }) => {
-                        void this.generateForItem(item, true);
+                    onClick: ({ item, body, tabType }) => {
+                        void this.generateForItem(item, true, {
+                            body,
+                            tabType,
+                        });
                     },
                 },
                 {
@@ -78,7 +82,9 @@ export class ReadingGuideFactory {
                 this.paneRefreshers.delete(body);
             },
             onItemChange: ({ item, setEnabled }) => {
-                setEnabled(Boolean(this.parentFor(item)));
+                setEnabled(
+                    Boolean(this.parentFor(item)) || item.isPDFAttachment(),
+                );
             },
             // Zotero 9.0.6 validates this hook as mandatory even when all
             // rendering work is performed by onAsyncRender.
@@ -86,10 +92,13 @@ export class ReadingGuideFactory {
             onAsyncRender: async ({
                 body,
                 item,
+                tabType,
                 setEnabled,
                 setSectionSummary,
             }) => {
-                const parent = this.parentFor(item);
+                const parent =
+                    this.parentFor(item) ||
+                    (item.isPDFAttachment() ? item : null);
                 setEnabled(Boolean(parent));
                 if (!parent) {
                     this.renderEmpty(body, getString("guide-no-parent"));
@@ -97,18 +106,29 @@ export class ReadingGuideFactory {
                 }
                 let selection: GuideSelection | null = null;
                 try {
-                    selection = await this.resolveSelection(item);
+                    selection = await this.resolveSelection(item, {
+                        body,
+                        tabType,
+                    });
                 } catch (_error) {
                     // The empty state below gives the user the actionable path.
                 }
-                const stored = this.loadStoredGuide(parent);
+                const stored = selection
+                    ? this.loadStoredGuide(parent, selection.source.key)
+                    : null;
                 if (
                     !stored ||
                     !selection ||
                     !this.storedGuideMatchesSelection(stored, selection)
                 ) {
                     setSectionSummary(getString("guide-not-generated"));
-                    this.renderEmpty(body, getString("guide-empty"), item);
+                    this.renderEmpty(
+                        body,
+                        getString(
+                            selection ? "guide-empty" : "guide-select-pdf",
+                        ),
+                        selection?.source,
+                    );
                     return;
                 }
                 setSectionSummary(stored.result.guide.oneSentence);
@@ -141,20 +161,24 @@ export class ReadingGuideFactory {
     static async generateForItem(
         item: Zotero.Item,
         forceRegenerate = false,
+        context?: GuideContext,
     ): Promise<void> {
         let progress: any;
         let acquiredGuard = false;
         let guardKey = "";
         try {
-            const selection = await this.resolveSelection(item);
-            guardKey = `${selection.parent.libraryID}:${selection.parent.key}`;
+            const selection = await this.resolveSelection(item, context);
+            guardKey = `${selection.source.libraryID}:${selection.source.key}`;
             if (this.inFlight.has(guardKey)) {
                 ztoolkit.getGlobal("alert")(getString("guide-already-running"));
                 return;
             }
             this.inFlight.add(guardKey);
             acquiredGuard = true;
-            const existing = this.loadStoredGuide(selection.parent);
+            const existing = this.loadStoredGuide(
+                selection.parent,
+                selection.source.key,
+            );
             if (
                 existing &&
                 this.storedGuideMatchesSelection(existing, selection) &&
@@ -243,28 +267,43 @@ export class ReadingGuideFactory {
 
     private static async resolveSelection(
         item: Zotero.Item,
+        context?: GuideContext,
     ): Promise<GuideSelection> {
-        const parent = this.parentFor(item);
+        const parent =
+            this.parentFor(item) || (item.isPDFAttachment() ? item : null);
         if (!parent) throw new Error(getString("guide-no-parent"));
-        const selectedID = item.isAttachment() ? item.id : undefined;
-        const candidates = await pdfIdentityAttachments(item);
-        if (!candidates.some((candidate) => candidate.translationRank > 0))
-            throw new Error(getString("guide-translation-missing"));
-        const resolved = selectGuidePDF(candidates, selectedID);
-        if (!resolved) throw new Error(getString("guide-original-missing"));
-        const source = candidates.find(
-            (candidate) => candidate.id === resolved.source.id,
-        )!;
-        const translated = candidates.find(
-            (candidate) => candidate.id === resolved.display.id,
-        )!;
+        let pdf: Zotero.Item | null = item.isPDFAttachment() ? item : null;
+        if (!pdf && context?.tabType === "reader") {
+            const section = context.body.closest("item-pane-custom-section") as
+                | (Element & { tabID?: string })
+                | null;
+            const reader = section?.tabID
+                ? Zotero.Reader.getByTabID(section.tabID)
+                : null;
+            if (reader?.itemID) {
+                const current = Zotero.Items.get(reader.itemID);
+                if (
+                    !current?.isPDFAttachment() ||
+                    current.libraryID !== item.libraryID ||
+                    current.parentItemID !== item.id
+                ) {
+                    throw new Error(getString("guide-select-pdf"));
+                }
+                pdf = current;
+            }
+        }
+        if (!pdf) pdf = await originalPDFAttachment(item);
+        if (!pdf) throw new Error(getString("guide-select-pdf"));
+        const path = await pdf.getFilePathAsync();
+        if (!path) throw new Error(getString("guide-select-pdf"));
+        if (!parent.isRegularItem()) await parent.loadDataType("note");
 
         return {
             parent,
-            source: source.item,
-            display: translated.item,
-            sourcePath: source.path,
-            displayPath: translated.path,
+            source: pdf,
+            display: pdf,
+            sourcePath: path,
+            displayPath: path,
         };
     }
 
@@ -346,16 +385,36 @@ export class ReadingGuideFactory {
         throw new Error(getString("guide-timeout"));
     }
 
-    private static findGuideNote(parent: Zotero.Item): Zotero.Item | null {
+    private static findGuideNote(
+        parent: Zotero.Item,
+        sourceKey: string,
+        displayKey?: string,
+    ): Zotero.Item | null {
         for (const id of parent.getNotes()) {
             const note = Zotero.Items.get(id);
-            if (note?.isNote() && note.hasTag(GUIDE_TAG)) return note;
+            const stored = note?.isNote()
+                ? storedGuideFromNoteHTML(note.getNote())
+                : null;
+            if (
+                note?.isNote() &&
+                note.hasTag(GUIDE_TAG) &&
+                stored?.sourceAttachmentKey === sourceKey &&
+                (!displayKey || stored.displayAttachmentKey === displayKey)
+            )
+                return note;
         }
         return null;
     }
 
-    private static loadStoredGuide(parent: Zotero.Item): StoredGuide | null {
-        const note = this.findGuideNote(parent);
+    private static loadStoredGuide(
+        parent: Zotero.Item,
+        sourceKey: string,
+    ): StoredGuide | null {
+        if (!parent.isRegularItem())
+            return storedGuideFromNoteHTML(parent.getNote());
+        const note =
+            this.findGuideNote(parent, sourceKey, sourceKey) ||
+            this.findGuideNote(parent, sourceKey);
         return note ? storedGuideFromNoteHTML(note.getNote()) : null;
     }
 
@@ -365,8 +424,7 @@ export class ReadingGuideFactory {
     ): boolean {
         return (
             stored.parentItemKey === selection.parent.key &&
-            stored.sourceAttachmentKey === selection.source.key &&
-            stored.displayAttachmentKey === selection.display.key
+            stored.sourceAttachmentKey === selection.source.key
         );
     }
 
@@ -391,10 +449,29 @@ export class ReadingGuideFactory {
             parentItemKey: selection.parent.key,
             sourceAttachmentKey: selection.source.key,
             displayAttachmentKey: selection.display.key,
+            sourceKind: "current-pdf",
+            inputFileName: PathUtils.filename(selection.sourcePath),
             generatedAt: new Date().toISOString(),
             result,
         };
-        let note = this.findGuideNote(selection.parent);
+        if (!selection.parent.isRegularItem()) {
+            const existing = selection.parent
+                .getNote()
+                .replace(
+                    /<div\b[^>]*data-pdf2zh-reading-guide=["']1["'][^>]*>[\s\S]*?<\/div>/i,
+                    "",
+                );
+            selection.parent.setNote(
+                `${existing}${storedGuideToNoteHTML(stored)}`,
+            );
+            await selection.parent.saveTx();
+            return;
+        }
+        let note = this.findGuideNote(
+            selection.parent,
+            selection.source.key,
+            selection.display.key,
+        );
         if (!note) {
             note = new Zotero.Item("note");
             note.libraryID = selection.parent.libraryID;
@@ -403,7 +480,6 @@ export class ReadingGuideFactory {
         }
         note.setNote(storedGuideToNoteHTML(stored));
         await note.saveTx();
-        await rememberPDFSource(selection.display, selection.source);
     }
 
     private static async openReaderAndPane(
@@ -497,6 +573,16 @@ export class ReadingGuideFactory {
             guide.oneSentence,
         );
         root.append(eyebrow, title, thesis);
+        if (stored.sourceKind === "current-pdf") {
+            root.append(
+                this.element(
+                    doc,
+                    "p",
+                    "pdf2zh-guide-label",
+                    `${getString("guide-current-pdf")}${stored.inputFileName ? ` · ${stored.inputFileName}` : ""}`,
+                ),
+            );
+        }
 
         this.appendAnchorSection(
             root,

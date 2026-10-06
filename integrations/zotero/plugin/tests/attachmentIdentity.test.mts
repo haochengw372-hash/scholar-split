@@ -183,3 +183,34 @@ test("an unrelated user relation is not treated as provenance and stale metadata
         "<p>ScholarSplit-PDF-Source-v1: http%3A%2F%2Fzotero.org%2Fusers%2F1%2Fitems%2FDELETED1</p>";
     assert.equal(await identity.originalPDFAttachment(display), null);
 });
+
+test("same-key current-PDF guide notes never classify an original as its own translation", async () => {
+    const { pdf, identity, parent, items } = fixture();
+    const source = pdf(1, "original.pdf", "Original");
+    const note = {
+        id: 1000,
+        isNote: () => true,
+        getNote: () =>
+            `<pre data-pdf2zh-guide-json="1">${JSON.stringify({
+                version: 1,
+                parentItemKey: parent.key,
+                sourceAttachmentKey: source.key,
+                displayAttachmentKey: source.key,
+                sourceKind: "current-pdf",
+                result: {
+                    kind: "guide",
+                    guide: {
+                        title: "Current PDF guide",
+                        oneSentence: "Summary",
+                    },
+                },
+            })}</pre>`,
+    };
+    items.set(note.id, note);
+    parent.getNotes = () => [note.id];
+    const candidates = await identity.pdfIdentityAttachments(source);
+    assert.equal(candidates[0].original, true);
+    assert.equal(candidates[0].translationRank, 0);
+    assert.equal(candidates[0].guideSourceKeys.length, 0);
+    assert.equal(await identity.originalPDFAttachment(source), source);
+});

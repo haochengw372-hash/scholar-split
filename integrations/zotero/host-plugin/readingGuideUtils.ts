@@ -69,6 +69,8 @@ export interface StoredGuide {
     parentItemKey: string;
     sourceAttachmentKey: string;
     displayAttachmentKey: string;
+    sourceKind?: "current-pdf";
+    inputFileName?: string;
     generatedAt: string;
     result: GuideResult;
 }
@@ -235,6 +237,11 @@ export function storedGuideToNoteHTML(stored: StoredGuide): string {
         '<div data-pdf2zh-reading-guide="1">',
         `<h1>PDF2zh 导读｜${escapeHTML(guide.title)}</h1>`,
         `<p><strong>一句话：</strong>${escapeHTML(guide.oneSentence)}</p>`,
+        ...(stored.sourceKind === "current-pdf"
+            ? [
+                  `<p>依据当前 PDF${stored.inputFileName ? `：${escapeHTML(stored.inputFileName)}` : ""}。以下页码均对应当前 PDF。</p>`,
+              ]
+            : []),
         "<h2>研究问题</h2>",
         noteList(questions),
         "<h2>关键发现</h2>",

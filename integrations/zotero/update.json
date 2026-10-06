@@ -2,8 +2,8 @@
   "addons": {
     "pdf2zh@guaguastandup.com": {
       "updates": [{
-        "version": "4.1.8-guide.14",
-        "update_link": "https://github.com/haochengw372-hash/scholar-split/releases/download/v0.3.1/ScholarSplit-Zotero-4.1.8-guide.14.xpi",
+        "version": "4.1.8-guide.15",
+        "update_link": "https://github.com/haochengw372-hash/scholar-split/releases/download/v0.3.2/ScholarSplit-Zotero-4.1.8-guide.15.xpi",
         "applications": {"zotero": {"strict_min_version": "6.999", "strict_max_version": "10.*"}}
       }]
     }

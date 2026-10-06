@@ -67,3 +67,12 @@ validation errors get one retry; provider failures remain visible. Only successf
 question/answer pairs are saved. Conversations and extracted text persist under
 `data/paper-chat/conversations.sqlite3` (mode `0600`, private directory `0700`).
 No PDF copy, embeddings dependency, or model key is stored in that database.
+
+## Current-PDF reading guides
+
+The Zotero guide reads the open or explicitly selected PDF, including translated
+and bilingual files. Citations refer to that supplied file's physical pages.
+The plugin sends pure base64 `fileContent` after stripping the FileReader data
+URL prefix; chat, guide and writing-review uploads share this file helper.
+Guides are saved per input attachment; standalone PDFs use their attachment note
+without replacing user notes or claiming that a translation is its own original.

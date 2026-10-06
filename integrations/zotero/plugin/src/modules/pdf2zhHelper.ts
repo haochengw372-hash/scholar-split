@@ -680,7 +680,10 @@ export class PDF2zhHelperFactory {
     static async blobToBase64(blob: Blob): Promise<string> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
+            reader.onload = () => {
+                const dataURL = reader.result as string;
+                resolve(dataURL.slice(dataURL.indexOf(",") + 1));
+            };
             reader.onerror = reject;
             reader.readAsDataURL(blob);
         });

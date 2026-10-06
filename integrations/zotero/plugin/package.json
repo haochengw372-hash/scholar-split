@@ -1,6 +1,6 @@
 {
     "name": "scholarsplit-zotero",
-    "version": "4.1.8-guide.14",
+    "version": "4.1.8-guide.15",
     "description": "PDF translation, reading guides, and paper chat in Zotero's native reader pane.",
     "config": {
         "addonName": "ScholarSplit · 翻译与导读",
