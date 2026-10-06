@@ -12,7 +12,7 @@ ScholarSplit 把 Chrome 里的论文翻译、结构化导读和本机文献库�
 
 ![ScholarSplit 文献工作台](design/qa/library-dual-source.png)
 
-## v0.3.3 能做什么
+## v0.3.4 能做什么
 
 - 在 Chrome 中处理在线或本地 PDF，并排查看译文与中文导读。
 - 完整 Zotero 插件与本地翻译主机可从本仓库构建、安装；默认集成 PDF2zh-next 与 BabelDOC，另可安装旧版 PDF2zh。
@@ -87,4 +87,4 @@ Python 测试覆盖索引幂等、哈希去重、导读匹配、FTS5、API 回�
 - Chrome 扩展、工作台前端和独立项目代码采用 [Apache License 2.0](LICENSE)，版权归 Haocheng Wang 及项目贡献者；署名信息见 [NOTICE](NOTICE)。
 - 完整翻译主机、Zotero 插件和 `integrations/` 仍采用 AGPL-3.0-or-later；根目录的 Apache-2.0 不会覆盖第三方许可证。详见[第三方声明](THIRD_PARTY_NOTICES.md)与[上游修改记录](docs/UPSTREAM.md)。
 
-当前版本为 ScholarSplit `v0.3.3`，Zotero 插件 `4.1.8-guide.16`。此前 MIT 发行版本保持原许可证。
+当前版本为 ScholarSplit `v0.3.4`，Zotero 插件 `4.1.8-guide.17`。此前 MIT 发行版本保持原许可证。

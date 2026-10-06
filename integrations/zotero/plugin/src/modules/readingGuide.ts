@@ -58,7 +58,7 @@ export class ReadingGuideFactory {
                 {
                     type: "regenerate",
                     icon: "chrome://zotero/skin/16/universal/sync.svg",
-                    l10nID: getLocaleID("guide-regenerate"),
+                    l10nID: getLocaleID("guide-regenerate-button"),
                     onClick: ({ item, body, tabType }) => {
                         void this.generateForItem(item, true, {
                             body,
@@ -69,7 +69,7 @@ export class ReadingGuideFactory {
                 {
                     type: "defensive-writing",
                     icon: defensiveIcon,
-                    l10nID: getLocaleID("defensive-menu"),
+                    l10nID: getLocaleID("defensive-pane-button"),
                     onClick: ({ item }) => {
                         void DefensiveWritingFactory.runForItem(item);
                     },
