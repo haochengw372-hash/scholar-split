@@ -1,7 +1,7 @@
 {
-  "version": "0.3.0",
-  "zoteroVersion": "4.1.8-guide.13",
+  "version": "0.3.1",
+  "zoteroVersion": "4.1.8-guide.14",
   "engines": {"default": "pdf2zh-next==2.9.0", "babeldoc": "BabelDOC==0.6.2", "optionalLegacy": "pdf2zh==1.9.11"},
   "source": "https://github.com/haochengw372-hash/scholar-split",
-  "licenses": {"chromeAndDashboard": "MIT", "serverAndZotero": "AGPL-3.0-or-later"}
+  "licenses": {"chromeAndDashboard": "Apache-2.0", "serverAndZotero": "AGPL-3.0-or-later"}
 }

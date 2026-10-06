@@ -1,13 +1,8 @@
 import { config } from "../../package.json";
 import { getLocaleID, getString } from "../utils/locale";
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
-import {
-    isOriginalPDF,
-    sourceMatchesTranslation,
-    storedGuideFromNoteHTML,
-    translatedAttachmentRank,
-} from "./readingGuideUtils";
-import { ChatRenderGate, selectChatSource } from "./paperChatUtils";
+import { originalPDFAttachment } from "./attachmentIdentity";
+import { ChatRenderGate } from "./paperChatUtils";
 
 interface ChatCitation {
     page: number;
@@ -74,6 +69,7 @@ export class PaperChatFactory {
             onAsyncRender: async ({
                 body,
                 item,
+                tabType,
                 setEnabled,
                 setSectionSummary,
             }) => {
@@ -90,8 +86,10 @@ export class PaperChatFactory {
                 setSectionSummary("");
                 this.render(body, pane);
                 try {
-                    pane.source = await this.resolveSource(item);
+                    pane.source = await this.resolveSource(item, tabType, body);
                     if (!this.isCurrent(body, pane)) return;
+                    pane.selection = `${pane.source.libraryID}:${pane.source.key}`;
+                    pane.ticket = pane.gate.begin(pane.selection);
                     setSectionSummary(pane.source.getField("title"));
                     this.render(body, pane);
                     const file = await PDF2zhHelperFactory.prepareFileData(
@@ -174,77 +172,34 @@ export class PaperChatFactory {
 
     private static async resolveSource(
         item: Zotero.Item,
+        tabType: "library" | "reader",
+        body: HTMLDivElement,
     ): Promise<Zotero.Item> {
-        const parent = item.isRegularItem()
-            ? item
-            : item.parentItemID
-              ? Zotero.Items.get(item.parentItemID)
-              : null;
-        const attachmentIDs = parent ? parent.getAttachments() : [item.id];
-        const candidates: Array<{
-            item: Zotero.Item;
-            fileName: string;
-            original: boolean;
-        }> = [];
-        for (const id of attachmentIDs) {
-            const attachment = Zotero.Items.get(id);
-            if (!attachment?.isPDFAttachment()) continue;
-            const path = await attachment.getFilePathAsync();
-            if (!path) continue;
-            const fileName = PathUtils.filename(path);
-            candidates.push({
-                item: attachment,
-                fileName,
-                original:
-                    isOriginalPDF(fileName) &&
-                    translatedAttachmentRank(
-                        fileName,
-                        attachment.getField("title"),
-                        attachment.id,
-                    ) === 0,
-            });
-        }
-        const selected = item.isPDFAttachment()
-            ? candidates.find((candidate) => candidate.item.id === item.id)
-            : undefined;
-        let storedSourceKey: string | undefined;
-        if (parent && selected && !selected.original) {
-            for (const noteID of parent.getNotes()) {
-                const note = Zotero.Items.get(noteID);
-                const stored = storedGuideFromNoteHTML(note.getNote());
+        // Chat reads the selected PDF itself, including translated/dual PDFs.
+        // Unlike translation and annotation workflows, it needs no original.
+        if (item.isPDFAttachment()) return item;
+        if (tabType === "reader") {
+            // Hook props omit tabID, but Zotero assigns it to this section.
+            const section = body.closest("item-pane-custom-section") as
+                | (Element & { tabID?: string })
+                | null;
+            const reader = section?.tabID
+                ? Zotero.Reader.getByTabID(section.tabID)
+                : null;
+            if (reader?.itemID) {
+                const pdf = Zotero.Items.get(reader.itemID);
                 if (
-                    stored?.parentItemKey === parent.key &&
-                    stored.displayAttachmentKey === item.key
-                ) {
-                    storedSourceKey = stored.sourceAttachmentKey;
-                    break;
-                }
+                    pdf?.isPDFAttachment() &&
+                    pdf.libraryID === item.libraryID &&
+                    pdf.parentItemID === item.id
+                )
+                    return pdf;
+                throw new Error(getString("chat-select-pdf"));
             }
         }
-        const source = selectChatSource(
-            candidates.map((candidate) => ({
-                id: candidate.item.id,
-                key: candidate.item.key,
-                original: candidate.original,
-                matchesSelectedTranslation: Boolean(
-                    selected &&
-                        sourceMatchesTranslation(
-                            candidate.fileName,
-                            selected.fileName,
-                        ),
-                ),
-            })),
-            item.isPDFAttachment() ? item.id : undefined,
-            storedSourceKey,
-        );
-        if (!source)
-            throw new Error(
-                getString(
-                    candidates.length ? "chat-select-original" : "chat-no-pdf",
-                ),
-            );
-        return candidates.find((candidate) => candidate.item.id === source.id)!
-            .item;
+        const source = await originalPDFAttachment(item);
+        if (!source) throw new Error(getString("chat-select-pdf"));
+        return source;
     }
 
     private static async request<T>(
@@ -423,7 +378,9 @@ export class PaperChatFactory {
             if (message.citations?.length) {
                 const citations = make("div", "ss-chat-citations");
                 const evidence = make("details", "ss-chat-evidence");
-                evidence.append(make("summary", "", getString("chat-show-evidence")));
+                evidence.append(
+                    make("summary", "", getString("chat-show-evidence")),
+                );
                 for (const [index, citation] of message.citations.entries()) {
                     const button = make(
                         "button",
@@ -440,7 +397,9 @@ export class PaperChatFactory {
                         });
                     });
                     citations.append(button);
-                    evidence.append(make("p", "", `[${index + 1}] ${citation.quote}`));
+                    evidence.append(
+                        make("p", "", `[${index + 1}] ${citation.quote}`),
+                    );
                 }
                 block.append(citations, evidence);
             }

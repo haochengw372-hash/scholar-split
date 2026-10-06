@@ -97,8 +97,10 @@ and unregister it on shutdown. Copy `host-plugin/icons/paper-chat.svg` to the
 host's `addon/content/icons/` and append the corresponding `host-plugin/locale/`
 strings to the host's locale file. It reuses the host's existing locale helper,
 PDF reader/base64 helper, and plugin configuration.
-Source selection works before translation and keeps unrelated PDFs separate;
-citations open the source attachment at the physical PDF page.
+In a reader, paper chat reads the PDF actually open in that reader, even if it
+is translated or bilingual. In the library, select a PDF explicitly when the
+parent has multiple candidates. Citations reopen that supplied attachment at its
+physical PDF page; unrelated readers are never used as a fallback.
 
 Include `src/` in the plugin's TypeScript build and initialize the bridge after
 Zotero has finished loading:

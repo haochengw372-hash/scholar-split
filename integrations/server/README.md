@@ -15,7 +15,7 @@ HTTP endpoint.
 
 Files in this integration directory are distributed under AGPL-3.0-or-later
 when combined with the supported AGPL host service. The independent dashboard
-and Chrome extension remain MIT licensed.
+and Chrome extension use Apache-2.0 from v0.3.1 onward.
 
 The bundled host already implements one bounded retry for invalid guide JSON.
 `patches/reading-guide-json-retry.patch` is only for older external hosts; do not
@@ -47,8 +47,9 @@ never by directly editing Zotero's database.
 
 ## Paper chat
 
-The Zotero reader's **论文问答** section reads the selected original PDF without
-requiring a translated attachment or a reading guide. It uses the independent
+The Zotero reader's **论文问答** section reads the currently opened PDF, including
+a translated or bilingual attachment, without requiring a separate original or
+reading guide. It uses the independent
 research model profile and the existing server-side DeepSeek key.
 
 - `POST /api/v1/paper-chat/documents` registers base64 `fileContent` and `fileName`,
@@ -58,7 +59,8 @@ research model profile and the existing server-side DeepSeek key.
   `answer`, verified `citations` (`page`, `quote`), `model`, and `contextPages`.
 - `DELETE /api/v1/paper-chat/documents/<id>/messages` clears the conversation.
 
-Page numbers refer to physical PDF pages, starting at 1. Short papers are supplied
+Page numbers refer to the actual supplied PDF, starting at 1; citations reopen
+that same attachment, rather than an inferred original. Short papers are supplied
 in full; longer papers use model-generated English search terms and local BM25
 passage selection, reported as `retrieved_passages` coverage. JSON or exact-quote
 validation errors get one retry; provider failures remain visible. Only successful

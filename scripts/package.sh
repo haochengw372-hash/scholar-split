@@ -34,7 +34,7 @@ archive = output / f"scholar-split-v{version}.zip"
 root_files = {
     "background.js", "lib.js", "manifest.json", "sidepanel.css", "sidepanel.html", "sidepanel.js",
     "viewer.css", "viewer.html", "viewer.js", "package.json", "package-lock.json",
-    "README.md", "AGENT_INSTALL.md", "LICENSE", "PRIVACY.md", "SECURITY.md", "THIRD_PARTY_NOTICES.md",
+    "README.md", "AGENT_INSTALL.md", "LICENSE", "NOTICE", "CITATION.cff", "PRIVACY.md", "SECURITY.md", "THIRD_PARTY_NOTICES.md",
     "release.json",
 }
 host_files = {

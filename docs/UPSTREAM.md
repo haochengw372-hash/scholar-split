@@ -14,4 +14,4 @@ PDF2zh-next、BabelDOC 与可选 PDF2zh 引擎由安装器从 PyPI 安装，不�
 `scripts/vendor-upstream.py` 是维护者的白名单摄取工具，不是用户安装命令。
 再次运行会覆盖衍生文件，维护者必须重新应用并审核下游变更；不得复制运行配置、数据库、API Key 或私人论文。
 
-ScholarSplit 独立 Chrome/工作台代码的 MIT 不替代本目录的 AGPL。
+ScholarSplit 独立 Chrome/工作台代码的 Apache-2.0 不替代本目录的 AGPL；旧 MIT 发行版本不被追溯改写。

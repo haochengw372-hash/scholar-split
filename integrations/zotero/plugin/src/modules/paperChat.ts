@@ -69,6 +69,7 @@ export class PaperChatFactory {
             onAsyncRender: async ({
                 body,
                 item,
+                tabType,
                 setEnabled,
                 setSectionSummary,
             }) => {
@@ -85,8 +86,10 @@ export class PaperChatFactory {
                 setSectionSummary("");
                 this.render(body, pane);
                 try {
-                    pane.source = await this.resolveSource(item);
+                    pane.source = await this.resolveSource(item, tabType, body);
                     if (!this.isCurrent(body, pane)) return;
+                    pane.selection = `${pane.source.libraryID}:${pane.source.key}`;
+                    pane.ticket = pane.gate.begin(pane.selection);
                     setSectionSummary(pane.source.getField("title"));
                     this.render(body, pane);
                     const file = await PDF2zhHelperFactory.prepareFileData(
@@ -169,9 +172,33 @@ export class PaperChatFactory {
 
     private static async resolveSource(
         item: Zotero.Item,
+        tabType: "library" | "reader",
+        body: HTMLDivElement,
     ): Promise<Zotero.Item> {
+        // Chat reads the selected PDF itself, including translated/dual PDFs.
+        // Unlike translation and annotation workflows, it needs no original.
+        if (item.isPDFAttachment()) return item;
+        if (tabType === "reader") {
+            // Hook props omit tabID, but Zotero assigns it to this section.
+            const section = body.closest("item-pane-custom-section") as
+                | (Element & { tabID?: string })
+                | null;
+            const reader = section?.tabID
+                ? Zotero.Reader.getByTabID(section.tabID)
+                : null;
+            if (reader?.itemID) {
+                const pdf = Zotero.Items.get(reader.itemID);
+                if (
+                    pdf?.isPDFAttachment() &&
+                    pdf.libraryID === item.libraryID &&
+                    pdf.parentItemID === item.id
+                )
+                    return pdf;
+                throw new Error(getString("chat-select-pdf"));
+            }
+        }
         const source = await originalPDFAttachment(item);
-        if (!source) throw new Error(getString("chat-select-original"));
+        if (!source) throw new Error(getString("chat-select-pdf"));
         return source;
     }
 

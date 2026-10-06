@@ -1,0 +1,12 @@
+ScholarSplit
+Copyright (c) 2026 Haocheng Wang
+Copyright (c) 2026 ScholarSplit contributors
+
+Independent Chrome extension, dashboard and project tooling are licensed under
+the Apache License, Version 2.0. This NOTICE does not modify that license.
+The integrations/server and integrations/zotero directories retain their
+AGPL-3.0-or-later licenses and upstream attribution. See THIRD_PARTY_NOTICES.md.
+
+For academic work, please cite Haocheng Wang (2026), ScholarSplit, and the
+version used. This is a scholarly citation request, not an additional condition
+on the rights granted by the licenses. See CITATION.cff.

@@ -107,7 +107,7 @@ if xpi:
         raise SystemExit("XPI 版本格式无效。")
     (target / "zotero").mkdir(exist_ok=True)
     shutil.copy2(xpi, target / "zotero" / f"ScholarSplit-Zotero-{version}.xpi")
-for name in ("README.md", "AGENT_INSTALL.md", "LICENSE", "THIRD_PARTY_NOTICES.md"):
+for name in ("README.md", "AGENT_INSTALL.md", "LICENSE", "NOTICE", "CITATION.cff", "THIRD_PARTY_NOTICES.md"):
     if (source / name).is_file():
         shutil.copy2(source / name, target / name)
 PY

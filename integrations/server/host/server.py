@@ -49,7 +49,7 @@ from utils.reading_guide import (
 
 _VALUE_ERROR_RE = re.compile(r'(?m)^ValueError:\s*(?P<msg>.+)$')
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 ############# config file #########
 pdf2zh      = 'pdf2zh'
