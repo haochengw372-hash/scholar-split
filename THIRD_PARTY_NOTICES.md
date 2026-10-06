@@ -1,16 +1,14 @@
 # 第三方声明
 
-ScholarSplit 仓库发布独立编写的 Chrome 扩展、工作台前端、服务端集成层和
-Zotero 同步桥接。它不复制或再分发下列项目的源代码、二进制文件或商标。
+ScholarSplit v0.3.0 包含上游衍生源码，不是全部 MIT：
 
-当前版本的本地接口已在以下项目衍生的用户自管服务上验证：
+- [zotero-pdf2zh](https://github.com/guaguastandup/zotero-pdf2zh)（guaguastandup）：AGPL-3.0。完整衍生源码和许可证保存在 `integrations/server/host/`、`integrations/zotero/plugin/`。
+- [PDFMathTranslate / PDF2zh](https://github.com/PDFMathTranslate/PDFMathTranslate)：AGPL-3.0，通过 `--legacy` 安装独立引擎。
+- [PDF2zh-next](https://github.com/PDFMathTranslate/PDFMathTranslate-next) 和 [BabelDOC](https://github.com/funstory-ai/BabelDOC)：AGPL-3.0，由安装器安装并保留包许可证。
+- PyMuPDF 使用其 AGPL 开源发行；其余依赖保留各自包许可证。
+- Zotero 构建使用 zotero-plugin-toolkit 和 zotero-plugin-scaffold；来源及版本见插件 `package-lock.json`。
 
-- [zotero-pdf2zh](https://github.com/guaguastandup/zotero-pdf2zh) — AGPL-3.0
-- [PDFMathTranslate](https://github.com/PDFMathTranslate/PDFMathTranslate) — AGPL-3.0
+`integrations/server/` 与 `integrations/zotero/` 采用 AGPL-3.0-or-later。
+独立 Chrome 扩展、工作台前端和根目录工具采用 MIT。完整对应源码随仓库及发行包提供，基线和修改说明见 [UPSTREAM.md](docs/UPSTREAM.md)。
 
-若用户或安装 Agent 另外下载、修改或分发这些项目，必须分别遵守其 AGPL-3.0
-许可证和版权声明。与这些后端组合的 `integrations/server/` 以及
-`integrations/zotero/` 使用 AGPL-3.0-or-later；仓库其他 MIT 代码不会替代或
-改变第三方项目的许可证。
-
-“ScholarSplit”名称、图标和界面视觉为本项目的新品牌，不代表上述项目对本项目的认可、赞助或官方兼容承诺。
+ScholarSplit 名称与“译”字标志不代表上游项目的官方认可或赞助。

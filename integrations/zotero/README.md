@@ -1,8 +1,25 @@
 # ScholarSplit Zotero sync bridge
 
-This directory is a standalone, AGPL-3.0-or-later integration intended to be
-copied or bundled into a Zotero 7 plugin. It is not loaded by the Chrome
-extension in the repository root.
+`plugin/` now contains the complete AGPL-3.0-or-later ScholarSplit Zotero addon
+source, including translation, reading guides, writing review, paper chat and
+sync. Install the Release XPI, or run `npm ci`, `npm test` and `npm run build`
+inside `plugin/`. It is not loaded by the Chrome extension.
+
+The addon ID and preference prefix are retained to update existing PDF2zh guide
+installations. This replaces that addon; the two cannot coexist with one ID.
+New translated attachments record their original Zotero attachment key/URI;
+renaming a file does not erase the association. Older files use an unambiguous
+single original under the same parent, or require an explicit original choice.
+
+The plugin reads a private pairing-token file and verifies it against the
+configured loopback service, rather than assuming a personal installation path.
+For custom roots set `extensions.zotero.pdf2zh.scholarSplitTokenPath` to
+`<installation>/server/data/zotero-pairing-token` in Zotero's config editor.
+Never put the token value in a preference. The server URL uses the existing
+`extensions.zotero.pdf2zh.new_serverip` preference.
+
+The remaining integration examples below are for maintainers embedding the
+bridge in other addons; end users should install the complete XPI.
 
 ## Boundary and data flow
 
@@ -72,6 +89,16 @@ waits for a completed job, and uses Zotero's annotation API to save red
 highlights with the reason and revision suggestion. It does not modify the PDF
 or write Zotero's database directly. The host plugin wires this action into
 the PDF context menu and reader sidebar.
+
+`host-plugin/paperChat.ts` provides the separate paper-chat reader section.
+Copy it with `paperChatUtils.ts` and `readingGuideUtils.ts` into the host's
+`src/modules/`, register `PaperChatFactory.registerPane()` after locale setup,
+and unregister it on shutdown. Copy `host-plugin/icons/paper-chat.svg` to the
+host's `addon/content/icons/` and append the corresponding `host-plugin/locale/`
+strings to the host's locale file. It reuses the host's existing locale helper,
+PDF reader/base64 helper, and plugin configuration.
+Source selection works before translation and keeps unrelated PDFs separate;
+citations open the source attachment at the physical PDF page.
 
 Include `src/` in the plugin's TypeScript build and initialize the bridge after
 Zotero has finished loading:

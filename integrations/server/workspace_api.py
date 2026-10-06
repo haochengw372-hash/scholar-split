@@ -397,6 +397,7 @@ def create_workspace_blueprint(
     pairing_token: str | None = None,
     research_service: Any | None = None,
     writing_service: Any | None = None,
+    chat_service: Any | None = None,
 ) -> Blueprint:
     """Build the v0.2 blueprint without modifying or starting a Flask app."""
 
@@ -1013,6 +1014,33 @@ def create_workspace_blueprint(
             raise BadRequest("fileContent must be base64 PDF data")
         filename = str(body.get("fileName") or "paper.pdf")
         return _success(writing_service.start(encoded_pdf, filename), 202)
+
+    def _chat_call(method: str, *args):
+        if chat_service is None:
+            raise StoreCapabilityError("Paper chat service is not configured")
+        try:
+            return getattr(chat_service, method)(*args)
+        except LookupError as exc:
+            raise NotFound(str(exc)) from exc
+
+    @api.post("/api/v1/paper-chat/documents")
+    def chat_document_register():
+        body = _json_body()
+        if not isinstance(body.get("fileContent"), str):
+            raise BadRequest("fileContent must be base64 PDF data")
+        return _success(_chat_call("register", body["fileContent"], str(body.get("fileName") or "paper.pdf")), 201)
+
+    @api.get("/api/v1/paper-chat/documents/<document_id>/messages")
+    def chat_messages(document_id: str):
+        return _success(_chat_call("history", document_id))
+
+    @api.delete("/api/v1/paper-chat/documents/<document_id>/messages")
+    def chat_messages_clear(document_id: str):
+        return _success(_chat_call("clear", document_id))
+
+    @api.post("/api/v1/paper-chat/documents/<document_id>/ask")
+    def chat_ask(document_id: str):
+        return _success(_chat_call("ask", document_id, _json_body().get("question")))
 
     @api.get("/api/v1/events")
     def events():

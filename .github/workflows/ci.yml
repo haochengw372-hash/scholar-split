@@ -18,9 +18,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install flask pytest PyMuPDF
+      - run: python -m pip install -r integrations/server/host/requirements.txt pytest
       - run: npm test
       - run: npm run check
+      - name: Build the complete Zotero plugin
+        run: |
+          cd integrations/zotero/plugin
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm test
+          npm run build
+      - name: Package the complete release
+        run: ./scripts/package.sh --xpi "$(find integrations/zotero/plugin/build -name '*.xpi' -print -quit)"
       - name: Reject obvious secrets and personal paths
         run: |
-          ! grep -RInE 'sk-[A-Za-z0-9_-]{16,}|/Users/[^/]+/' --exclude-dir=.git --exclude=ci.yml .
+          ! grep -RlE 'sk-[A-Za-z0-9_-]{16,}|/Users/[^/]+/' --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.scaffold --exclude-dir=build --exclude-dir=.pytest_cache --exclude-dir=__pycache__ --exclude=ci.yml .

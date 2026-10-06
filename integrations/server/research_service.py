@@ -261,7 +261,7 @@ class ResearchService:
             )
         return stored
 
-    def _request_json(self, prompt: str) -> tuple[dict[str, Any], str]:
+    def _request_json(self, prompt: str, *, max_tokens: int = 12000, thinking: bool | None = None) -> tuple[dict[str, Any], str]:
         profile = self.profile()
         if not profile["apiKey"]:
             raise ValueError("研究模型 API Key 尚未配置")
@@ -272,9 +272,11 @@ class ResearchService:
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.1,
-            "max_tokens": 12000,
+            "max_tokens": max_tokens,
             "response_format": {"type": "json_object"},
         }
+        if thinking is not None:
+            body["thinking"] = {"type": "enabled" if thinking else "disabled"}
         request = urllib.request.Request(
             "https://api.deepseek.com/v1/chat/completions",
             data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
@@ -286,6 +288,8 @@ class ResearchService:
                 payload = json.loads(response.read(4 * 1024 * 1024).decode("utf-8"))
         except Exception as exc:
             code = getattr(exc, "code", None)
+            if code == 402:
+                raise ValueError("DeepSeek 账户余额不足，请充值后再发送。") from exc
             raise ValueError(f"研究模型请求失败{f'（HTTP {code}）' if code else ''}") from exc
         content = payload.get("choices", [{}])[0].get("message", {}).get("content")
         if not isinstance(content, str):

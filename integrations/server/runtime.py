@@ -10,6 +10,7 @@ from typing import Any
 
 from .workspace_api import create_workspace_blueprint
 from .defensive_writing import DefensiveWritingService
+from .paper_chat import PaperChatService
 from .research_service import ResearchService
 from .workspace_store import WorkspaceStore
 
@@ -88,6 +89,7 @@ def initialize_workspace(app: Any, server_root: str | Path) -> WorkspaceStore:
     store = WorkspaceStore(data_dir / "scholarsplit.sqlite3", root)
     store.research_service = ResearchService(store, root)
     store.defensive_writing_service = DefensiveWritingService(store, root)
+    store.paper_chat_service = PaperChatService(root, lambda prompt: store.research_service._request_json(prompt, max_tokens=4000, thinking=False))
     watcher = WorkspaceIngestWatcher(store, root)
     watcher.start()
     store._on_close.append(watcher.stop)
@@ -102,6 +104,7 @@ def initialize_workspace(app: Any, server_root: str | Path) -> WorkspaceStore:
             pairing_token=token,
             research_service=store.research_service,
             writing_service=store.defensive_writing_service,
+            chat_service=store.paper_chat_service,
         )
     )
     return store

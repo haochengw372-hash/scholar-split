@@ -46,7 +46,7 @@ def decode_pdf(value: str) -> bytes:
         data = base64.b64decode(value, validate=True)
     except (ValueError, TypeError) as exc:
         raise ValueError("PDF content must be base64") from exc
-    if not 4000 <= len(data) <= MAX_PDF_BYTES or b"%PDF-" not in data[:1024] or b"%%EOF" not in data[-65536:]:
+    if len(data) > MAX_PDF_BYTES or b"%PDF-" not in data[:1024] or b"%%EOF" not in data[-65536:]:
         raise ValueError("A complete PDF under 100 MB is required")
     return data
 

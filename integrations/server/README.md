@@ -1,8 +1,8 @@
 # ScholarSplit server integration
 
-This directory is the local Flask/SQLite integration for ScholarSplit. It is
-designed to be copied into an AGPL-compatible local translation server as a
-`scholarsplit` Python package together with the `dashboard/` directory.
+This directory includes both the Flask/SQLite workspace integration and, under
+`host/`, the complete AGPL-compatible PDF translation server. Use the repository
+installer to assemble the `scholarsplit` Python package, dashboard and host.
 
 It registers `/workspace`, `/workspace-assets/*`, and `/api/v1/*`. Existing
 translation, guide, task, history, and file routes remain owned by the host
@@ -17,9 +17,9 @@ Files in this integration directory are distributed under AGPL-3.0-or-later
 when combined with the supported AGPL host service. The independent dashboard
 and Chrome extension remain MIT licensed.
 
-`patches/reading-guide-json-retry.patch` adds one bounded retry only when the
-model response cannot be parsed as JSON. Apply it from the compatible host
-server root with `patch -p1 < scholarsplit/patches/reading-guide-json-retry.patch`.
+The bundled host already implements one bounded retry for invalid guide JSON.
+`patches/reading-guide-json-retry.patch` is only for older external hosts; do not
+apply it again to this release.
 
 ## Zotero writing review
 
@@ -44,3 +44,24 @@ The review flags wording for human judgment. It does not score authorship,
 change the PDF bytes, or claim that a necessary scientific limitation is bad
 writing. The plugin writes annotations through `Zotero.Annotations.saveFromJSON`,
 never by directly editing Zotero's database.
+
+## Paper chat
+
+The Zotero reader's **论文问答** section reads the selected original PDF without
+requiring a translated attachment or a reading guide. It uses the independent
+research model profile and the existing server-side DeepSeek key.
+
+- `POST /api/v1/paper-chat/documents` registers base64 `fileContent` and `fileName`,
+  returning `documentId` (PDF SHA-256), `pageCount`, and `textPageCount`.
+- `GET /api/v1/paper-chat/documents/<id>/messages` restores that PDF's conversation.
+- `POST /api/v1/paper-chat/documents/<id>/ask` accepts `question` and returns
+  `answer`, verified `citations` (`page`, `quote`), `model`, and `contextPages`.
+- `DELETE /api/v1/paper-chat/documents/<id>/messages` clears the conversation.
+
+Page numbers refer to physical PDF pages, starting at 1. Short papers are supplied
+in full; longer papers use model-generated English search terms and local BM25
+passage selection, reported as `retrieved_passages` coverage. JSON or exact-quote
+validation errors get one retry; provider failures remain visible. Only successful
+question/answer pairs are saved. Conversations and extracted text persist under
+`data/paper-chat/conversations.sqlite3` (mode `0600`, private directory `0700`).
+No PDF copy, embeddings dependency, or model key is stored in that database.
